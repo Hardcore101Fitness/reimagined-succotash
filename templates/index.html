@@ -47,27 +47,9 @@
          SECTION 1: HERO
     ======================================================== -->
     <section class="hero" id="hero" aria-label="Hero">
-      <!-- Video background with image fallback -->
+      <!-- Video background with CSS gradient fallback -->
       <div class="hero-media">
-        <video
-          class="hero-video"
-          autoplay
-          muted
-          loop
-          playsinline
-          poster="{{ url_for('static', filename='images/hero-poster.webp') }}"
-          aria-hidden="true"
-        >
-          <!-- Replace src with actual video URL -->
-          <!-- <source src="{{ url_for('static', filename='videos/hero.mp4') }}" type="video/mp4" /> -->
-        </video>
-        <!-- Fallback image shown when no video source -->
-        <img
-          class="hero-fallback"
-          src="{{ url_for('static', filename='images/hero-poster.webp') }}"
-          alt="Members training at Hardcore Fitness 101 in Agoura Hills"
-          loading="eager"
-        />
+        <!-- Replace with: <video class="hero-video" autoplay muted loop playsinline poster="..."><source src="your-video.mp4" type="video/mp4"></video> -->
         <div class="hero-overlay" aria-hidden="true"></div>
       </div>
 
