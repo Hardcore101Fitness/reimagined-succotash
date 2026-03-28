@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hardcore Fitness 101 | Coach Led Gym in Agoura Hills</title>
+  <meta name="description" content="Premium coach led strength training and cardio classes in Agoura Hills. Start your 21 day trial today." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- ========================================================
+       NAVIGATION
+  ======================================================== -->
+  <header class="site-header" id="site-header">
+    <div class="container nav-inner">
+      <a href="/" class="logo" aria-label="Hardcore Fitness 101 home">
+        Hardcore<span>Fitness 101</span>
+      </a>
+      <nav class="nav-links" id="nav-links" aria-label="Main navigation">
+        <a href="#programs">Programs</a>
+        <a href="#amenities">Amenities</a>
+        <a href="#testimonials">Reviews</a>
+        <a href="#faq">FAQ</a>
+        <a href="#trial" class="btn btn-primary nav-cta">Start Free Trial</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile sticky CTA -->
+  <div class="mobile-sticky-cta">
+    <a href="#trial" class="btn btn-primary btn-full">Start Your 21 Day Trial</a>
+  </div>
+
+  <main>
+
+    <!-- ========================================================
+         SECTION 1: HERO
+    ======================================================== -->
+    <section class="hero" id="hero" aria-label="Hero">
+      <!-- Video background with image fallback -->
+      <div class="hero-media">
+        <video
+          class="hero-video"
+          autoplay
+          muted
+          loop
+          playsinline
+          poster="{{ url_for('static', filename='images/hero-poster.webp') }}"
+          aria-hidden="true"
+        >
+          <!-- Replace src with actual video URL -->
+          <!-- <source src="{{ url_for('static', filename='videos/hero.mp4') }}" type="video/mp4" /> -->
+        </video>
+        <!-- Fallback image shown when no video source -->
+        <img
+          class="hero-fallback"
+          src="{{ url_for('static', filename='images/hero-poster.webp') }}"
+          alt="Members training at Hardcore Fitness 101 in Agoura Hills"
+          loading="eager"
+        />
+        <div class="hero-overlay" aria-hidden="true"></div>
+      </div>
+
+      <div class="container hero-content">
+        <h1 class="hero-headline">Coach Led Strength Training<br />in Agoura Hills</h1>
+        <p class="hero-sub">
+          Build strength, lose body fat, and stay consistent with structured workouts,
+          expert coaching, and a community that keeps you accountable.
+        </p>
+        <div class="hero-ctas">
+          <a href="#trial" class="btn btn-primary btn-lg">Start Your 21 Day Trial</a>
+          <a href="#programs" class="btn btn-ghost btn-lg">View Classes</a>
+        </div>
+        <ul class="hero-trust" aria-label="Key features">
+          <li>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            75+ classes per week
+          </li>
+          <li>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            Beginner friendly
+          </li>
+          <li>
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            Coach led every session
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION 2: TRUST BAR
+    ======================================================== -->
+    <section class="trust-bar" aria-label="Social proof numbers">
+      <div class="container trust-bar-inner">
+        <div class="trust-stat">
+          <span class="trust-number">75+</span>
+          <span class="trust-label">Classes per week</span>
+        </div>
+        <div class="trust-divider" aria-hidden="true"></div>
+        <div class="trust-stat">
+          <span class="trust-number">500+</span>
+          <span class="trust-label">Members strong</span>
+        </div>
+        <div class="trust-divider" aria-hidden="true"></div>
+        <div class="trust-stat">
+          <span class="trust-number">5★</span>
+          <span class="trust-label">Rated in Agoura Hills</span>
+        </div>
+        <div class="trust-divider" aria-hidden="true"></div>
+        <div class="trust-stat">
+          <span class="trust-number">100%</span>
+          <span class="trust-label">Coach led sessions</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION 3: WHY US
+    ======================================================== -->
+    <section class="why-us section-pad" id="why-us" aria-labelledby="why-us-heading">
+      <div class="container">
+        <div class="section-label">Why Hardcore Fitness 101</div>
+        <h2 class="section-heading" id="why-us-heading">Training That Actually Works</h2>
+        <p class="section-sub">We built every class around one thing: getting you real, lasting results.</p>
+
+        <div class="cards-grid">
+
+          <div class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <h3 class="card-title">Expert Coaching Every Class</h3>
+            <p class="card-desc">Every session is led by a certified coach — not a playlist. Real-time form correction, motivation, and programming you can trust.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <h3 class="card-title">Structured, Progressive Training</h3>
+            <p class="card-desc">No guesswork. Our programs are built to progressively challenge you week over week so you keep getting stronger.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <h3 class="card-title">Built-In Accountability</h3>
+            <p class="card-desc">Coaches know your name. Members notice when you're gone. The structure keeps you showing up even when motivation dips.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <h3 class="card-title">A Community, Not a Gym</h3>
+            <p class="card-desc">Training alongside people who share your goals makes all the difference. This is a crew that celebrates your wins.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="card-title">Truly Beginner Friendly</h3>
+            <p class="card-desc">Never worked out before? Perfect. We meet you where you are and scale workouts so you're never lost or left behind.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Mid-page CTA -->
+    <div class="inline-cta">
+      <div class="container inline-cta-inner">
+        <p>Ready to see what structured training feels like?</p>
+        <a href="#trial" class="btn btn-primary">Start Your 21 Day Trial</a>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         SECTION 4: PROGRAMS
+    ======================================================== -->
+    <section class="programs section-pad" id="programs" aria-labelledby="programs-heading">
+      <div class="container">
+        <div class="section-label">Our Programs</div>
+        <h2 class="section-heading" id="programs-heading">Two Ways to Train. One Standard of Excellence.</h2>
+        <p class="section-sub">Choose the format that fits your goals — or do both.</p>
+
+        <div class="programs-grid">
+
+          <div class="program-card">
+            <div class="program-badge">Strength</div>
+            <h3 class="program-name">Lift</h3>
+            <p class="program-desc">
+              Progressive strength training built around compound movements. Every class is designed to build real muscle, increase your baseline strength, and create the consistency that drives long-term results.
+            </p>
+            <ul class="program-features">
+              <li>Coach-programmed weekly progressions</li>
+              <li>Technique-first approach</li>
+              <li>Scales for all fitness levels</li>
+              <li>Track your lifts and watch them grow</li>
+            </ul>
+            <a href="#trial" class="btn btn-primary">Try a Class</a>
+          </div>
+
+          <div class="program-card program-card--accent">
+            <div class="program-badge program-badge--light">Cardio Boxing</div>
+            <h3 class="program-name">Red Zone Rumble</h3>
+            <p class="program-desc">
+              High-energy cardio boxing under medical-grade infrared lighting. This class is intense, fun, and addictive — the kind of workout that makes you forget you're working out.
+            </p>
+            <ul class="program-features">
+              <li>Medical-grade infrared lighting</li>
+              <li>Full-body cardio boxing format</li>
+              <li>High energy music and coaching</li>
+              <li>Burns serious calories, fast</li>
+            </ul>
+            <a href="#trial" class="btn btn-white">Try a Class</a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION 5: AMENITIES
+    ======================================================== -->
+    <section class="amenities section-pad" id="amenities" aria-labelledby="amenities-heading">
+      <div class="container">
+        <div class="section-label">The Experience</div>
+        <h2 class="section-heading" id="amenities-heading">More Than a Gym</h2>
+        <p class="section-sub">Everything you need before, during, and after your workout.</p>
+
+        <div class="amenities-grid">
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <span>Infrared Sauna</span>
+          </div>
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            </div>
+            <span>Medical Grade Infrared Lighting</span>
+          </div>
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6H5a2 2 0 00-2 2v8a2 2 0 002 2h4"/><path d="M15 6h4a2 2 0 012 2v8a2 2 0 01-2 2h-4"/><path d="M9 12h6"/></svg>
+            </div>
+            <span>Showers &amp; Beauty Stations</span>
+          </div>
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/></svg>
+            </div>
+            <span>Outdoor Patio</span>
+          </div>
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg>
+            </div>
+            <span>InBody Composition Scans</span>
+          </div>
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <span>On-Demand Workouts</span>
+          </div>
+
+          <div class="amenity">
+            <div class="amenity-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <span>Free Parking</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Mid-page CTA -->
+    <div class="inline-cta">
+      <div class="container inline-cta-inner">
+        <p>Experience everything for yourself — zero commitment.</p>
+        <a href="#trial" class="btn btn-primary">Claim Your 21 Day Trial</a>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         SECTION 6: SOCIAL PROOF / TESTIMONIALS
+    ======================================================== -->
+    <section class="testimonials section-pad" id="testimonials" aria-labelledby="testimonials-heading">
+      <div class="container">
+        <div class="section-label">Real Members. Real Results.</div>
+        <h2 class="section-heading" id="testimonials-heading">What People Are Saying</h2>
+
+        <div class="testimonials-grid">
+
+          <div class="testimonial-card">
+            <div class="stars" aria-label="5 stars">★★★★★</div>
+            <blockquote>
+              "I've tried a lot of gyms in the valley and nothing compares. The coaches actually know your name and push you in the right way. I'm stronger than I've ever been."
+            </blockquote>
+            <cite>— Sarah M., Agoura Hills</cite>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="stars" aria-label="5 stars">★★★★★</div>
+            <blockquote>
+              "Red Zone Rumble is unlike anything else. The infrared lighting, the energy, the coaching — I actually look forward to 5am workouts now. Never thought I'd say that."
+            </blockquote>
+            <cite>— Jason T., Westlake Village</cite>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="stars" aria-label="5 stars">★★★★★</div>
+            <blockquote>
+              "I came in completely out of shape and honestly intimidated. The team made me feel welcome immediately. Three months in and I've lost 22 lbs. Best investment I've made."
+            </blockquote>
+            <cite>— Lisa R., Thousand Oaks</cite>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="stars" aria-label="5 stars">★★★★★</div>
+            <blockquote>
+              "The Lift program is exactly what I needed. Real programming, not just random workouts. My deadlift went from 135 to 225 in four months."
+            </blockquote>
+            <cite>— Mike D., Agoura Hills</cite>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="stars" aria-label="5 stars">★★★★★</div>
+            <blockquote>
+              "The community here is something special. I've made genuine friends and that accountability keeps me consistent like nothing else ever has."
+            </blockquote>
+            <cite>— Priya K., Calabasas</cite>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="stars" aria-label="5 stars">★★★★★</div>
+            <blockquote>
+              "The sauna alone is worth the membership. But add the coaching, the classes, and how clean everything is — it's genuinely a premium experience."
+            </blockquote>
+            <cite>— Chris W., Malibu</cite>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION 7: 21-DAY TRIAL OFFER
+    ======================================================== -->
+    <section class="trial section-pad" id="trial" aria-labelledby="trial-heading">
+      <div class="container">
+        <div class="trial-inner">
+          <div class="trial-copy">
+            <div class="section-label">Limited Offer</div>
+            <h2 class="section-heading" id="trial-heading">21 Day Trial to Get Started</h2>
+            <p class="section-sub">The lowest-friction way to experience everything Hardcore Fitness 101 has to offer.</p>
+            <ul class="trial-includes">
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Unlimited classes for 21 days
+              </li>
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Personal coaching support
+              </li>
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Simple, guided onboarding
+              </li>
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Built-in accountability from day one
+              </li>
+              <li>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414L8.414 15l-4.121-4.121a1 1 0 111.414-1.414L8.414 12.172l7.879-7.879a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                Access to all programs &amp; amenities
+              </li>
+            </ul>
+          </div>
+
+          <div class="trial-form-wrap">
+            <form class="trial-form" id="trial-form" novalidate aria-label="21 Day Trial sign up form">
+              <h3 class="form-title">Claim Your Spot</h3>
+              <p class="form-sub">No commitment. Just results.</p>
+
+              <div class="form-group">
+                <label for="first-name">First Name</label>
+                <input type="text" id="first-name" name="first_name" placeholder="Your first name" autocomplete="given-name" required />
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" name="phone" placeholder="(805) 555-0100" autocomplete="tel" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@email.com" autocomplete="email" required />
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full btn-lg">Claim Your 21 Day Trial</button>
+              <p class="form-disclaimer">No spam. No pressure. We'll reach out within 24 hours.</p>
+            </form>
+            <div class="form-success" id="form-success" aria-live="polite" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <h3>You're in!</h3>
+              <p>We'll be in touch within 24 hours to get you started.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION 8: FAQ
+    ======================================================== -->
+    <section class="faq section-pad" id="faq" aria-labelledby="faq-heading">
+      <div class="container faq-container">
+        <div class="section-label">Questions</div>
+        <h2 class="section-heading" id="faq-heading">Frequently Asked Questions</h2>
+
+        <div class="faq-list" role="list">
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-1">
+              Is this beginner friendly?
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer" id="faq-1" hidden>
+              <p>Absolutely. We see beginners walk through our doors every week. Our coaches scale every workout so that it works for your current fitness level — and they'll make sure you feel confident, not confused. You don't need experience. You just need to show up.</p>
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-2">
+              Do I need to be in shape before I start?
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer" id="faq-2" hidden>
+              <p>Not at all. That's why you're coming to us. Whether you've been sedentary for years or you're returning after a break, we meet you exactly where you are. Getting you into shape is our job — not your prerequisite.</p>
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-3">
+              What are the workouts like?
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer" id="faq-3" hidden>
+              <p>We offer two primary formats: <strong>Lift</strong> (coach-led progressive strength training) and <strong>Red Zone Rumble</strong> (high-energy cardio boxing). Both are group classes led by certified coaches, with modifications available for all levels. Expect structure, accountability, and a real challenge.</p>
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-4">
+              How long are classes?
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer" id="faq-4" hidden>
+              <p>Most classes run 45–60 minutes. They're designed to be efficient — no fluff, no wasted time. You can get in, train hard, and be out the door within an hour. We also offer early morning, midday, and evening options to fit your schedule.</p>
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-5">
+              What happens after I sign up for the trial?
+              <svg class="faq-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq-answer" id="faq-5" hidden>
+              <p>After you submit the form, a member of our team will reach out within 24 hours to welcome you and walk you through your first visit. We'll help you pick classes that fit your schedule and goals. From there, just show up — we handle the rest.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================
+         SECTION 9: FINAL CTA + LOCATION
+    ======================================================== -->
+    <section class="location section-pad" id="location" aria-labelledby="location-heading">
+      <div class="container">
+        <div class="location-inner">
+
+          <div class="location-info">
+            <div class="section-label">Find Us</div>
+            <h2 class="section-heading" id="location-heading">We're Right Here in Agoura Hills</h2>
+            <p class="location-address">
+              <!-- Replace with actual address -->
+              <strong>Hardcore Fitness 101</strong><br />
+              [Street Address]<br />
+              Agoura Hills, CA 91301
+            </p>
+            <p class="location-hours">
+              <strong>Hours</strong><br />
+              Mon–Fri: 5:00am – 8:00pm<br />
+              Sat–Sun: 7:00am – 12:00pm
+            </p>
+            <p class="location-contact">
+              <a href="tel:+18055550000">(805) 555-0000</a><br />
+              <a href="mailto:info@hardcorefitness101.com">info@hardcorefitness101.com</a>
+            </p>
+            <a href="#trial" class="btn btn-primary btn-lg">Start Your 21 Day Trial</a>
+          </div>
+
+          <div class="location-map">
+            <!-- Replace with actual Google Maps embed -->
+            <div class="map-placeholder" aria-label="Map placeholder — replace with Google Maps embed">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              <p>Map loads here</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================
+       FOOTER
+  ======================================================== -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a href="/" class="logo" aria-label="Hardcore Fitness 101 home">
+          Hardcore<span>Fitness 101</span>
+        </a>
+        <p>Coach led strength training &amp; cardio boxing in Agoura Hills, CA.</p>
+      </div>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="#programs">Programs</a>
+        <a href="#amenities">Amenities</a>
+        <a href="#testimonials">Reviews</a>
+        <a href="#faq">FAQ</a>
+        <a href="#trial">Start Trial</a>
+      </nav>
+      <p class="footer-copy">&copy; <span id="footer-year"></span> Hardcore Fitness 101. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
