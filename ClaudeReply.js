@@ -18,7 +18,7 @@ if (!image) { Script.complete(); return; }
 
 // Encode image as base64 JPEG
 const fm = FileManager.local();
-const tmp = fm.joinPath(fm.temporaryDirectory(), "cr_tmp.jpg");
+const tmp = fm.joinPath(fm.temporaryDirectory(), "cr_tmp.png");
 fm.writeImage(tmp, image);
 const b64 = fm.read(tmp).toBase64String();
 
@@ -39,7 +39,7 @@ req.body = JSON.stringify({
     content: [
       {
         type: "image",
-        source: { type: "base64", media_type: "image/jpeg", data: b64 }
+        source: { type: "base64", media_type: "image/png", data: b64 }
       },
       {
         type: "text",
