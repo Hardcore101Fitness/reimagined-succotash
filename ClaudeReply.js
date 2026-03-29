@@ -6,15 +6,19 @@ const API_KEY = "sk-ant-api03-Kmdu6YooKoCaash_CIRmnGBprRzjfD2rdbkqiBNOtMr9DQ_qsX
 
 const SYSTEM = "You are drafting a reply on behalf of Mike. Match the tone and length of the incoming message. No emojis. No filler phrases. Never sound like AI or corporate speak. No dashes. No sign-off. Include a call to action when relevant. If complaint, stay calm. If spam, polite decline. If unclear, ask clarifying question. If compliment, stay humble and brief. Reply in same language as incoming message. Output only the reply text, nothing else.";
 
-// Pick screenshot from Photos (most recent appears first)
+// Accept image from share sheet, or fall back to Photos picker
 let image;
-try {
-  image = await Photos.fromLibrary();
-} catch (e) {
-  Script.complete();
-  return;
+if (args.attachments && args.attachments.length > 0) {
+  image = args.attachments[0];
+} else {
+  try {
+    image = await Photos.fromLibrary();
+  } catch (e) {
+    Script.complete();
+    return;
+  }
+  if (!image) { Script.complete(); return; }
 }
-if (!image) { Script.complete(); return; }
 
 // Encode image as base64 JPEG
 const fm = FileManager.local();
