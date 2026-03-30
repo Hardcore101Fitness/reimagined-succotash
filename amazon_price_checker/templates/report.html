@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing Report — Amazon Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      padding: 32px 24px;
+      color: #111;
+    }
+
+    .container { max-width: 820px; margin: 0 auto; }
+
+    /* Print button — hidden when printing */
+    .print-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .print-bar h1 { font-size: 20px; font-weight: 700; }
+    .print-bar .meta { font-size: 13px; color: #666; margin-top: 2px; }
+
+    .btn-group { display: flex; gap: 10px; }
+
+    .btn {
+      padding: 9px 20px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.88; }
+    .btn-primary { background: linear-gradient(135deg, #ff9900, #e47911); color: #fff; }
+    .btn-outline { background: #fff; color: #374151; border: 1.5px solid #d1d5db; }
+
+    /* Summary */
+    .summary-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .stat { text-align: center; }
+    .stat .value { font-size: 28px; font-weight: 800; color: #111; }
+    .stat .label { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* Category section */
+    .category-heading {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #666;
+      margin: 24px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    /* Anomaly cards */
+    .anomaly-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      border-left: 5px solid #ddd;
+      page-break-inside: avoid;
+    }
+
+    .anomaly-card.MISPRICE           { border-color: #ef4444; }
+    .anomaly-card.HISTORY_ANOMALY    { border-color: #f59e0b; }
+    .anomaly-card.SELLER_DISCREPANCY { border-color: #3b82f6; }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .card-title { font-size: 15px; font-weight: 600; flex: 1; line-height: 1.4; }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .MISPRICE           .badge { background: #ef4444; color: #fff; }
+    .HISTORY_ANOMALY    .badge { background: #f59e0b; color: #fff; }
+    .SELLER_DISCREPANCY .badge { background: #3b82f6; color: #fff; }
+
+    .card-row { font-size: 13px; margin-bottom: 4px; color: #374151; }
+    .card-row strong { color: #111; }
+
+    .card-link {
+      font-size: 13px;
+      color: #2563eb;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .card-link:hover { text-decoration: underline; }
+
+    .no-results {
+      text-align: center;
+      padding: 60px 0;
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .print-bar .btn-group { display: none; }
+      .anomaly-card { box-shadow: none; border: 1px solid #e5e7eb; }
+      .summary-card { box-shadow: none; border: 1px solid #e5e7eb; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="print-bar">
+      <div>
+        <h1>Amazon Pricing Error Report</h1>
+        <div class="meta">
+          Categories: {{ categories | join(", ") }}
+          &nbsp;·&nbsp;
+          {{ anomalies | length }} anomali{{ "es" if anomalies | length != 1 else "y" }} found
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+        <a href="/" class="btn btn-outline">← New scan</a>
+      </div>
+    </div>
+
+    {% if anomalies %}
+      {% set type_counts = {} %}
+      {% for a in anomalies %}
+        {% if type_counts.update({a.anomaly_type: type_counts.get(a.anomaly_type, 0) + 1}) %}{% endif %}
+      {% endfor %}
+
+      <div class="summary-card">
+        <div class="stat">
+          <div class="value">{{ anomalies | length }}</div>
+          <div class="label">Total Anomalies</div>
+        </div>
+        <div class="stat">
+          <div class="value" style="color:#ef4444">{{ type_counts.get('MISPRICE', 0) }}</div>
+          <div class="label">Mispriced</div>
+        </div>
+        <div class="stat">
+          <div class="value" style="color:#f59e0b">{{ type_counts.get('HISTORY_ANOMALY', 0) }}</div>
+          <div class="label">History Anomalies</div>
+        </div>
+        <div class="stat">
+          <div class="value" style="color:#3b82f6">{{ type_counts.get('SELLER_DISCREPANCY', 0) }}</div>
+          <div class="label">Seller Discrepancies</div>
+        </div>
+      </div>
+
+      {% set badge_labels = {
+        "MISPRICE": "MISPRICE",
+        "HISTORY_ANOMALY": "HISTORY",
+        "SELLER_DISCREPANCY": "SELLER ±"
+      } %}
+
+      {% set ns = namespace(current_cat=None) %}
+      {% for a in anomalies | sort(attribute='category') %}
+        {% if a.category != ns.current_cat %}
+          {% set ns.current_cat = a.category %}
+          <div class="category-heading">{{ a.category }}</div>
+        {% endif %}
+
+        {% set discount_label = (a.discount_pct * 100) | round(1) | string + ("% spread" if a.anomaly_type == "SELLER_DISCREPANCY" else "% off") %}
+
+        <div class="anomaly-card {{ a.anomaly_type }}">
+          <div class="card-top">
+            <div class="card-title">{{ a.title }}</div>
+            <span class="badge">{{ badge_labels.get(a.anomaly_type, a.anomaly_type) }}</span>
+          </div>
+          <div class="card-row">
+            <strong>${{ "%.2f" | format(a.current_price) }}</strong>
+            &nbsp;&nbsp;ref ${{ "%.2f" | format(a.reference_price) }} — {{ discount_label }}
+          </div>
+          <div class="card-row" style="color:#6b7280">{{ a.details }}</div>
+          <a class="card-link" href="{{ a.url }}" target="_blank" rel="noopener">
+            {{ a.url }}
+          </a>
+        </div>
+      {% endfor %}
+
+    {% else %}
+      <div class="no-results">No pricing anomalies were detected in this scan.</div>
+    {% endif %}
+  </div>
+</body>
+</html>

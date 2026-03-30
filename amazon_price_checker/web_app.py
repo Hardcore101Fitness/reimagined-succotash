@@ -7,19 +7,21 @@ Then open http://localhost:5000 in your browser.
 
 import io
 import json
-import os
 import queue
 import threading
+import uuid
 from contextlib import redirect_stdout
 
-from flask import Flask, Response, render_template, request, send_file
+from flask import Flask, Response, render_template, request
 
-from analyzer import Anomaly, analyze_products
+from analyzer import analyze_products
 from config import load_config
-from notifier import generate_pdf
 from scraper import CATEGORIES, fetch_product_detail, scrape_category
 
 app = Flask(__name__)
+
+# In-memory store: scan_id -> list of anomaly dicts (for the report page)
+_scan_results: dict[str, list] = {}
 
 
 @app.route("/")
@@ -33,19 +35,20 @@ def scan():
     if not selected:
         return render_template("index.html", categories=list(CATEGORIES.keys()),
                                error="Please select at least one category.")
-    return render_template("scan.html", categories=selected)
+    scan_id = str(uuid.uuid4())
+    return render_template("scan.html", categories=selected, scan_id=scan_id)
 
 
 @app.route("/stream")
 def stream():
-    """Server-Sent Events endpoint that runs the scan and emits live progress."""
+    """Server-Sent Events endpoint: runs the scan and emits live progress + anomalies."""
     selected = request.args.getlist("c")
+    scan_id = request.args.get("sid", "")
 
     def generate():
         q: queue.Queue = queue.Queue()
 
         class QueueWriter(io.TextIOBase):
-            """Redirect print() output into the SSE queue."""
             def write(self, s: str) -> int:
                 text = s.rstrip()
                 if text:
@@ -58,7 +61,7 @@ def stream():
         def run_scan():
             try:
                 config = load_config()
-                all_anomalies: list[Anomaly] = []
+                all_anomalies = []
 
                 with redirect_stdout(QueueWriter()):
                     for category in selected:
@@ -67,7 +70,7 @@ def stream():
                             products, category, config, fetch_product_detail
                         )
                         for a in anomalies:
-                            q.put(("anomaly", {
+                            d = {
                                 "asin": a.asin,
                                 "title": a.title,
                                 "url": a.url,
@@ -77,24 +80,20 @@ def stream():
                                 "reference_price": a.reference_price,
                                 "discount_pct": a.discount_pct,
                                 "details": a.details,
-                            }))
-                        all_anomalies.extend(anomalies)
+                            }
+                            q.put(("anomaly", d))
+                            all_anomalies.append(d)
+                        all_anomalies.extend([])  # no-op, already appended above
 
-                pdf_path = None
-                if all_anomalies:
-                    pdf_path = generate_pdf(
-                        all_anomalies, selected, config["pdf_output_dir"]
-                    )
+                if scan_id:
+                    _scan_results[scan_id] = all_anomalies
 
-                q.put(("done", {
-                    "count": len(all_anomalies),
-                    "pdf": pdf_path,
-                }))
+                q.put(("done", {"count": len(all_anomalies), "scan_id": scan_id}))
 
             except Exception as exc:
                 q.put(("error", {"message": str(exc)}))
             finally:
-                q.put(None)  # sentinel
+                q.put(None)
 
         thread = threading.Thread(target=run_scan, daemon=True)
         thread.start()
@@ -113,14 +112,11 @@ def stream():
     )
 
 
-@app.route("/download")
-def download():
-    path = request.args.get("path", "")
-    if not path.endswith(".pdf") or ".." in path:
-        return "Invalid path", 400
-    if not os.path.isfile(path):
-        return "File not found", 404
-    return send_file(path, as_attachment=True, download_name=os.path.basename(path))
+@app.route("/report/<scan_id>")
+def report(scan_id: str):
+    anomalies = _scan_results.get(scan_id, [])
+    categories = list({a["category"] for a in anomalies})
+    return render_template("report.html", anomalies=anomalies, categories=categories)
 
 
 if __name__ == "__main__":

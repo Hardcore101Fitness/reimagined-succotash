@@ -288,22 +288,24 @@
   <div id="summary">
     <div class="summary-text" id="summaryText"></div>
     <div class="summary-actions">
-      <a id="pdfBtn" class="btn btn-primary" style="display:none">📄 Download PDF</a>
+      <a id="reportBtn" class="btn btn-primary" style="display:none" target="_blank">📄 View / Print Report</a>
       <a href="/" class="btn btn-outline">← New scan</a>
     </div>
   </div>
 
   <script>
     const categories = {{ categories | tojson }};
+    const scanId = {{ scan_id | tojson }};
     const params = new URLSearchParams();
     categories.forEach(c => params.append("c", c));
+    params.set("sid", scanId);
 
     const logEl      = document.getElementById("log");
     const resultsEl  = document.getElementById("results");
     const emptyState = document.getElementById("emptyState");
     const summaryEl  = document.getElementById("summary");
     const summaryText = document.getElementById("summaryText");
-    const pdfBtn     = document.getElementById("pdfBtn");
+    const reportBtn  = document.getElementById("reportBtn");
     const countEl    = document.getElementById("anomalyCount");
     const titleEl    = document.getElementById("pageTitle");
     const dotEl      = document.getElementById("statusDot");
@@ -383,9 +385,9 @@
         ? `Found <strong>${d.count}</strong> pricing ${noun} across the selected categories.`
         : `<strong>No pricing anomalies detected</strong> in the selected categories.`;
 
-      if (d.pdf) {
-        pdfBtn.href = `/download?path=${encodeURIComponent(d.pdf)}`;
-        pdfBtn.style.display = "inline-flex";
+      if (d.count > 0 && d.scan_id) {
+        reportBtn.href = `/report/${encodeURIComponent(d.scan_id)}`;
+        reportBtn.style.display = "inline-flex";
       }
 
       summaryEl.classList.add("visible");
