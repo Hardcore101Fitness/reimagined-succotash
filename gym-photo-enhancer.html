@@ -704,9 +704,11 @@ function enhance(canvas, img, settings) {
   let imageData = ctx.getImageData(0, 0, outW, outH);
   let d = imageData.data;
 
-  // 1. Noise reduction (simple box blur pass)
-  if (settings.denoise > 0.1) {
-    d = boxBlurPass(d, outW, outH, Math.round(settings.denoise * 2));
+  // 1. Noise reduction (separable box blur with strength-based blend)
+  if (settings.denoise > 0.05) {
+    const radius = Math.round(1 + settings.denoise * 4); // 1-5px radius
+    const blend = 0.3 + settings.denoise * 0.7; // 0.3 to 1.0 blend
+    d = boxBlurPass(d, outW, outH, radius, blend);
     imageData.data.set(d);
   }
 
@@ -747,36 +749,64 @@ function enhance(canvas, img, settings) {
   }
 }
 
-function boxBlurPass(data, w, h, radius) {
+function multiPassBlur(data, w, h, radius) {
+  // Horizontal then vertical box blur for smooth results
   if (radius < 1) return data;
-  const out = new Uint8ClampedArray(data);
-  const size = (radius * 2 + 1);
-  const area = size * size;
+  const len = data.length;
+  const tmp = new Uint8ClampedArray(len);
+  const out = new Uint8ClampedArray(len);
 
-  for (let y = radius; y < h - radius; y++) {
-    for (let x = radius; x < w - radius; x++) {
-      let r = 0, g = 0, b = 0;
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const idx = ((y + dy) * w + (x + dx)) * 4;
-          r += data[idx];
-          g += data[idx + 1];
-          b += data[idx + 2];
+  // Horizontal pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let dx = -radius; dx <= radius; dx++) {
+        const nx = x + dx;
+        if (nx >= 0 && nx < w) {
+          const idx = (y * w + nx) * 4;
+          r += data[idx]; g += data[idx+1]; b += data[idx+2];
+          count++;
         }
       }
       const idx = (y * w + x) * 4;
-      // Blend original with blurred based on denoise strength
-      const blend = 0.4;
-      out[idx] = data[idx] * (1 - blend) + (r / area) * blend;
-      out[idx + 1] = data[idx + 1] * (1 - blend) + (g / area) * blend;
-      out[idx + 2] = data[idx + 2] * (1 - blend) + (b / area) * blend;
+      tmp[idx] = r / count; tmp[idx+1] = g / count; tmp[idx+2] = b / count; tmp[idx+3] = data[idx+3];
+    }
+  }
+
+  // Vertical pass
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        const ny = y + dy;
+        if (ny >= 0 && ny < h) {
+          const idx = (ny * w + x) * 4;
+          r += tmp[idx]; g += tmp[idx+1]; b += tmp[idx+2];
+          count++;
+        }
+      }
+      const idx = (y * w + x) * 4;
+      out[idx] = r / count; out[idx+1] = g / count; out[idx+2] = b / count; out[idx+3] = data[idx+3];
     }
   }
   return out;
 }
 
+function boxBlurPass(data, w, h, radius, blend) {
+  if (radius < 1) return data;
+  const blurred = multiPassBlur(data, w, h, radius);
+  const out = new Uint8ClampedArray(data);
+  for (let i = 0; i < data.length; i += 4) {
+    out[i] = data[i] * (1 - blend) + blurred[i] * blend;
+    out[i+1] = data[i+1] * (1 - blend) + blurred[i+1] * blend;
+    out[i+2] = data[i+2] * (1 - blend) + blurred[i+2] * blend;
+  }
+  return out;
+}
+
 function applyContrast(d, amount) {
-  const factor = 1 + amount * 0.6; // up to 1.6x contrast
+  // 0 = flat/washed out (factor 0.3), 0.5 = normal (1.0), 1.0 = high contrast (1.8)
+  const factor = 0.3 + amount * 1.5;
   const mid = 128;
   for (let i = 0; i < d.length; i += 4) {
     d[i] = clamp((d[i] - mid) * factor + mid);
@@ -786,19 +816,22 @@ function applyContrast(d, amount) {
 }
 
 function applyClarity(d, w, h, amount) {
-  // Simplified local contrast enhancement
-  const strength = amount * 0.5;
+  // Local contrast enhancement with larger effective radius via multi-step
+  const strength = amount * 2.5;
   const copy = new Uint8ClampedArray(d);
+  const step = 2; // sample farther apart for a larger-radius feel
 
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
+  for (let y = step; y < h - step; y++) {
+    for (let x = step; x < w - step; x++) {
       const idx = (y * w + x) * 4;
       for (let c = 0; c < 3; c++) {
         const center = copy[idx + c];
         const avg = (
-          copy[((y-1)*w+x)*4+c] + copy[((y+1)*w+x)*4+c] +
-          copy[(y*w+x-1)*4+c] + copy[(y*w+x+1)*4+c]
-        ) / 4;
+          copy[((y-step)*w+x)*4+c] + copy[((y+step)*w+x)*4+c] +
+          copy[(y*w+x-step)*4+c] + copy[(y*w+x+step)*4+c] +
+          copy[((y-step)*w+x-step)*4+c] + copy[((y-step)*w+x+step)*4+c] +
+          copy[((y+step)*w+x-step)*4+c] + copy[((y+step)*w+x+step)*4+c]
+        ) / 8;
         const diff = center - avg;
         d[idx + c] = clamp(center + diff * strength);
       }
@@ -807,7 +840,7 @@ function applyClarity(d, w, h, amount) {
 }
 
 function applySharpen(d, w, h, amount) {
-  const strength = amount * 1.2;
+  const strength = amount * 2.5;
   const copy = new Uint8ClampedArray(d);
 
   for (let y = 1; y < h - 1; y++) {
@@ -827,40 +860,39 @@ function applySharpen(d, w, h, amount) {
 }
 
 function applyColorGrade(d, s) {
-  // Cinematic warm highlights + deep cool shadows
-  const warmShift = s.warmth * 15;    // red/yellow push in highlights
-  const shadowDeepen = s.shadows * 40; // crush shadows
-  const highlightGlow = s.highlights * 20;
+  // 0 = no effect, 1.0 = maximum effect for each
+  const warmShift = s.warmth * 45;      // strong warm/cool range
+  const shadowDeepen = s.shadows * 80;   // heavy shadow crush
+  const highlightGlow = s.highlights * 60; // bright highlight bloom
 
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i], g = d[i + 1], b = d[i + 2];
     const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-    const t = lum / 255; // 0=shadow, 1=highlight
+    const t = lum / 255;
 
-    // Shadow treatment: deepen + slight teal/blue tint
-    if (t < 0.4) {
-      const shadowT = 1 - (t / 0.4); // 1 at pure black, 0 at mid
-      r = clamp(r - shadowDeepen * shadowT * 0.3);
-      g = clamp(g - shadowDeepen * shadowT * 0.25);
-      b = clamp(b - shadowDeepen * shadowT * 0.15); // less blue crush = teal shadows
+    // Shadow treatment: deepen + teal tint
+    if (t < 0.5) {
+      const shadowT = 1 - (t / 0.5);
+      r = clamp(r - shadowDeepen * shadowT * 0.4);
+      g = clamp(g - shadowDeepen * shadowT * 0.3);
+      b = clamp(b - shadowDeepen * shadowT * 0.15);
     }
 
-    // Highlight treatment: warm golden push
-    if (t > 0.6) {
-      const hlT = (t - 0.6) / 0.4; // 0 at mid, 1 at white
-      r = clamp(r + warmShift * hlT);
-      g = clamp(g + warmShift * hlT * 0.7);
-      b = clamp(b - warmShift * hlT * 0.3); // pull blue for warmth
-      // Glow
-      r = clamp(r + highlightGlow * hlT * 0.5);
-      g = clamp(g + highlightGlow * hlT * 0.3);
+    // Highlight treatment: warm golden push + glow
+    if (t > 0.5) {
+      const hlT = (t - 0.5) / 0.5;
+      r = clamp(r + warmShift * hlT * 0.8);
+      g = clamp(g + warmShift * hlT * 0.5);
+      b = clamp(b - warmShift * hlT * 0.4);
+      r = clamp(r + highlightGlow * hlT * 0.6);
+      g = clamp(g + highlightGlow * hlT * 0.35);
+      b = clamp(b + highlightGlow * hlT * 0.1);
     }
 
-    // Midtone color: slight warm nudge
-    if (t > 0.3 && t < 0.7) {
-      r = clamp(r + warmShift * 0.15);
-      g = clamp(g + warmShift * 0.05);
-    }
+    // Midtone warmth — affects the whole image noticeably
+    r = clamp(r + warmShift * 0.25);
+    g = clamp(g + warmShift * 0.08);
+    b = clamp(b - warmShift * 0.15);
 
     d[i] = r;
     d[i + 1] = g;
@@ -869,8 +901,8 @@ function applyColorGrade(d, s) {
 }
 
 function applySaturation(d, amount) {
-  // amount 0-1, where 0.5 = neutral, <0.5 desaturate, >0.5 boost
-  const factor = 0.6 + amount * 0.9; // range ~0.6 to 1.5
+  // 0 = full grayscale, 0.5 = normal, 1.0 = vivid
+  const factor = amount * 2.0; // range 0 to 2.0
   for (let i = 0; i < d.length; i += 4) {
     const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
     d[i] = clamp(lum + (d[i] - lum) * factor);
@@ -880,10 +912,14 @@ function applySaturation(d, amount) {
 }
 
 function applyVignette(ctx, w, h, amount) {
-  const gradient = ctx.createRadialGradient(w/2, h/2, w * 0.25, w/2, h/2, h * 0.75);
+  const strength = amount * 0.95;
+  const innerRadius = w * (0.4 - amount * 0.2); // shrinks with amount
+  const outerRadius = Math.max(w, h) * 0.7;
+  const gradient = ctx.createRadialGradient(w/2, h/2, innerRadius, w/2, h/2, outerRadius);
   gradient.addColorStop(0, 'rgba(0,0,0,0)');
-  gradient.addColorStop(0.5, 'rgba(0,0,0,0)');
-  gradient.addColorStop(1, `rgba(0,0,0,${amount * 0.85})`);
+  gradient.addColorStop(0.4, `rgba(0,0,0,${strength * 0.1})`);
+  gradient.addColorStop(0.7, `rgba(0,0,0,${strength * 0.4})`);
+  gradient.addColorStop(1, `rgba(0,0,0,${strength})`);
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, w, h);
 }
@@ -891,7 +927,7 @@ function applyVignette(ctx, w, h, amount) {
 function applyGrain(ctx, w, h, amount) {
   const imageData = ctx.getImageData(0, 0, w, h);
   const d = imageData.data;
-  const intensity = amount * 30;
+  const intensity = amount * 80; // much stronger range
 
   for (let i = 0; i < d.length; i += 4) {
     const noise = (Math.random() - 0.5) * intensity;
