@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Pricing Error Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 40px 48px;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #ff9900, #e47911);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 32px;
+      margin-top: 4px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .category-item {
+      position: relative;
+    }
+
+    .category-item input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .category-item label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #374151;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .category-item label:hover {
+      border-color: #ff9900;
+      background: #fff8ee;
+    }
+
+    .category-item input:checked + label {
+      border-color: #ff9900;
+      background: #fff8ee;
+      color: #111;
+      font-weight: 500;
+    }
+
+    .check-icon {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 5px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      background: #fff;
+    }
+
+    .category-item input:checked + label .check-icon {
+      background: #ff9900;
+      border-color: #ff9900;
+    }
+
+    .category-item input:checked + label .check-icon::after {
+      content: "";
+      width: 10px;
+      height: 6px;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(-45deg) translateY(-1px);
+      display: block;
+    }
+
+    .category-emoji { font-size: 16px; }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .select-all {
+      font-size: 13px;
+      color: #ff9900;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .scan-btn {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #ff9900, #e47911);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      flex: 1;
+    }
+
+    .scan-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .scan-btn:active { transform: translateY(0); }
+
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🔍</div>
+      <h1>Pricing Error Checker</h1>
+    </div>
+    <p class="subtitle">Scans Amazon categories and flags suspicious pricing anomalies.</p>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form id="scanForm" method="GET" action="/scan">
+      <div class="section-label">Select Categories</div>
+
+      <div class="category-grid">
+        {% set emojis = {
+          "Electronics": "📱",
+          "Computers": "💻",
+          "Home & Kitchen": "🏠",
+          "Sports & Outdoors": "⚽",
+          "Clothing": "👕",
+          "Books": "📚",
+          "Toys & Games": "🎮",
+          "Health & Personal Care": "💊"
+        } %}
+        {% for cat in categories %}
+        <div class="category-item">
+          <input type="checkbox" name="c" value="{{ cat }}" id="cat_{{ loop.index }}">
+          <label for="cat_{{ loop.index }}">
+            <span class="check-icon"></span>
+            <span class="category-emoji">{{ emojis.get(cat, "🛒") }}</span>
+            {{ cat }}
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="controls">
+        <button type="button" class="select-all" onclick="toggleAll()">Select all</button>
+        <button type="submit" class="scan-btn">Start Scan →</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    let allSelected = false;
+    function toggleAll() {
+      const boxes = document.querySelectorAll('input[type="checkbox"]');
+      allSelected = !allSelected;
+      boxes.forEach(b => b.checked = allSelected);
+      document.querySelector('.select-all').textContent = allSelected ? 'Deselect all' : 'Select all';
+    }
+  </script>
+</body>
+</html>

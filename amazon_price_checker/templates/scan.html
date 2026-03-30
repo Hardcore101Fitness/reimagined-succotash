@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanning… — Amazon Pricing Checker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .page-header {
+      max-width: 900px;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .page-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .page-header .cats {
+      font-size: 13px;
+      color: #888;
+    }
+
+    .back-link {
+      font-size: 13px;
+      color: #ff9900;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .layout {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 680px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .panel-title {
+      padding: 14px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Log panel */
+    .log-panel { grid-column: span 1; }
+
+    #log {
+      background: #1a1a2e;
+      color: #a8d8a8;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 16px;
+      height: 340px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #log .log-warn { color: #fbbf24; }
+    #log .log-err  { color: #f87171; }
+
+    /* Results panel */
+    .results-panel { grid-column: span 1; }
+
+    #results {
+      padding: 12px;
+      height: 340px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #bbb;
+      font-size: 13px;
+      gap: 8px;
+    }
+
+    .empty-state .icon { font-size: 32px; }
+
+    /* Anomaly cards */
+    .anomaly-card {
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-left: 4px solid;
+      background: #fafafa;
+      font-size: 13px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anomaly-card.MISPRICE           { border-color: #ef4444; background: #fef2f2; }
+    .anomaly-card.HISTORY_ANOMALY    { border-color: #f59e0b; background: #fffbeb; }
+    .anomaly-card.SELLER_DISCREPANCY { border-color: #3b82f6; background: #eff6ff; }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: #111;
+      line-height: 1.35;
+      flex: 1;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 2px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .MISPRICE           .badge { background: #ef4444; color: #fff; }
+    .HISTORY_ANOMALY    .badge { background: #f59e0b; color: #fff; }
+    .SELLER_DISCREPANCY .badge { background: #3b82f6; color: #fff; }
+
+    .card-price {
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .card-price strong { color: #111; }
+
+    .card-details {
+      color: #6b7280;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .card-link {
+      font-size: 12px;
+      color: #2563eb;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .card-link:hover { text-decoration: underline; }
+
+    /* Summary bar */
+    #summary {
+      max-width: 900px;
+      margin: 20px auto 0;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+      padding: 18px 24px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    #summary.visible { display: flex; }
+
+    .summary-text { font-size: 15px; color: #374151; }
+    .summary-text strong { color: #111; }
+
+    .summary-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 9px 20px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover { opacity: 0.88; }
+
+    .btn-primary { background: linear-gradient(135deg, #ff9900, #e47911); color: #fff; }
+    .btn-outline { background: #fff; color: #374151; border: 1.5px solid #d1d5db; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 2px solid #22c55e;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .done-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 id="pageTitle">Scanning Amazon…</h1>
+      <div class="cats">{{ categories | join(", ") }}</div>
+    </div>
+    <a href="/" class="back-link">← New scan</a>
+  </div>
+
+  <div class="layout">
+    <div class="panel log-panel">
+      <div class="panel-title">
+        <span id="statusDot" class="spinner"></span>
+        Live Progress
+      </div>
+      <div id="log"></div>
+    </div>
+
+    <div class="panel results-panel">
+      <div class="panel-title">
+        Anomalies Found
+        <span id="anomalyCount" style="margin-left:auto;font-size:13px;color:#111;font-weight:700"></span>
+      </div>
+      <div id="results">
+        <div class="empty-state" id="emptyState">
+          <span class="icon">🔎</span>
+          <span>Anomalies will appear here…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="summary">
+    <div class="summary-text" id="summaryText"></div>
+    <div class="summary-actions">
+      <a id="pdfBtn" class="btn btn-primary" style="display:none">📄 Download PDF</a>
+      <a href="/" class="btn btn-outline">← New scan</a>
+    </div>
+  </div>
+
+  <script>
+    const categories = {{ categories | tojson }};
+    const params = new URLSearchParams();
+    categories.forEach(c => params.append("c", c));
+
+    const logEl      = document.getElementById("log");
+    const resultsEl  = document.getElementById("results");
+    const emptyState = document.getElementById("emptyState");
+    const summaryEl  = document.getElementById("summary");
+    const summaryText = document.getElementById("summaryText");
+    const pdfBtn     = document.getElementById("pdfBtn");
+    const countEl    = document.getElementById("anomalyCount");
+    const titleEl    = document.getElementById("pageTitle");
+    const dotEl      = document.getElementById("statusDot");
+
+    let anomalyCount = 0;
+
+    function appendLog(text, cls) {
+      const line = document.createElement("span");
+      if (cls) line.className = cls;
+      line.textContent = text + "\n";
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function addAnomalyCard(a) {
+      emptyState.style.display = "none";
+      anomalyCount++;
+      countEl.textContent = anomalyCount;
+
+      const badgeLabels = {
+        MISPRICE:           "MISPRICE",
+        HISTORY_ANOMALY:    "HISTORY",
+        SELLER_DISCREPANCY: "SELLER ±",
+      };
+
+      const discountLabel = a.anomaly_type === "SELLER_DISCREPANCY"
+        ? `${(a.discount_pct * 100).toFixed(0)}% spread`
+        : `${(a.discount_pct * 100).toFixed(0)}% off`;
+
+      const card = document.createElement("div");
+      card.className = `anomaly-card ${a.anomaly_type}`;
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-title">${escHtml(a.title)}</div>
+          <span class="badge">${badgeLabels[a.anomaly_type] || a.anomaly_type}</span>
+        </div>
+        <div class="card-price">
+          <strong>$${a.current_price.toFixed(2)}</strong>
+          &nbsp;(ref $${a.reference_price.toFixed(2)} — ${discountLabel})
+        </div>
+        <div class="card-details">${escHtml(a.details)}</div>
+        <a class="card-link" href="${escHtml(a.url)}" target="_blank" rel="noopener">
+          View on Amazon ↗
+        </a>
+      `;
+      resultsEl.appendChild(card);
+      resultsEl.scrollTop = resultsEl.scrollHeight;
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    const es = new EventSource(`/stream?${params.toString()}`);
+
+    es.addEventListener("log", e => {
+      const d = JSON.parse(e.data);
+      const cls = d.message.includes("WARNING") ? "log-warn"
+                : d.message.includes("ERROR")   ? "log-err"
+                : null;
+      appendLog(d.message, cls);
+    });
+
+    es.addEventListener("anomaly", e => {
+      addAnomalyCard(JSON.parse(e.data));
+    });
+
+    es.addEventListener("done", e => {
+      const d = JSON.parse(e.data);
+      es.close();
+
+      dotEl.className = "done-dot";
+      titleEl.textContent = "Scan Complete";
+
+      const noun = d.count === 1 ? "anomaly" : "anomalies";
+      summaryText.innerHTML = d.count > 0
+        ? `Found <strong>${d.count}</strong> pricing ${noun} across the selected categories.`
+        : `<strong>No pricing anomalies detected</strong> in the selected categories.`;
+
+      if (d.pdf) {
+        pdfBtn.href = `/download?path=${encodeURIComponent(d.pdf)}`;
+        pdfBtn.style.display = "inline-flex";
+      }
+
+      summaryEl.classList.add("visible");
+      appendLog("✓ Scan complete.", null);
+    });
+
+    es.addEventListener("error", e => {
+      try {
+        const d = JSON.parse(e.data);
+        appendLog("ERROR: " + d.message, "log-err");
+      } catch {
+        appendLog("Connection error.", "log-err");
+      }
+      es.close();
+      dotEl.className = "done-dot";
+      dotEl.style.background = "#ef4444";
+    });
+  </script>
+</body>
+</html>
