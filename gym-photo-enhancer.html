@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardcore Fitness 101 — Photo Enhancer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app-header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    border-bottom: 2px solid #c9a84c;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .app-header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, #c9a84c, #f5d98e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .app-header .subtitle {
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px;
+  }
+
+  .prompt-banner {
+    background: linear-gradient(135deg, #1a1510 0%, #141210 100%);
+    border: 1px solid #c9a84c33;
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 30px;
+  }
+
+  .prompt-banner h3 {
+    font-family: 'Oswald', sans-serif;
+    color: #c9a84c;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .prompt-banner p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #999;
+  }
+
+  .prompt-banner p strong { color: #c9a84c; }
+
+  .upload-zone {
+    border: 2px dashed #333;
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #111;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: #c9a84c;
+    background: #1a1510;
+  }
+
+  .upload-zone svg {
+    width: 64px;
+    height: 64px;
+    fill: #444;
+    margin-bottom: 16px;
+    transition: fill 0.3s;
+  }
+
+  .upload-zone:hover svg { fill: #c9a84c; }
+
+  .upload-zone h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    color: #ccc;
+    margin-bottom: 8px;
+  }
+
+  .upload-zone p { color: #666; font-size: 14px; }
+
+  .upload-zone input { display: none; }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #c9a84c, #a68a3a);
+    color: #0a0a0a;
+    font-weight: 600;
+  }
+
+  .btn-primary:hover { background: linear-gradient(135deg, #d4b55c, #b8994a); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: #1a1a1a;
+    color: #ccc;
+    border: 1px solid #333;
+  }
+
+  .btn-secondary:hover { border-color: #c9a84c; color: #c9a84c; }
+  .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-download {
+    background: linear-gradient(135deg, #2d7a3a, #1f5c2a);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .btn-download:hover { background: linear-gradient(135deg, #38944a, #287035); }
+
+  /* Sliders */
+  .settings-panel {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 30px;
+    display: none;
+  }
+
+  .settings-panel.visible { display: block; }
+
+  .settings-panel h3 {
+    font-family: 'Oswald', sans-serif;
+    color: #c9a84c;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .slider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .slider-group label span { color: #c9a84c; font-weight: 600; }
+
+  .slider-group input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #222;
+    outline: none;
+  }
+
+  .slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #c9a84c;
+    cursor: pointer;
+    border: 2px solid #0a0a0a;
+  }
+
+  /* Canvas Area */
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 30px;
+  }
+
+  .canvas-panel {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .canvas-panel .label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #000000aa;
+    color: #999;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 6px;
+    z-index: 2;
+    font-family: 'Oswald', sans-serif;
+  }
+
+  .canvas-panel canvas, .canvas-panel img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .canvas-panel .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 500px;
+    color: #333;
+    font-size: 14px;
+  }
+
+  /* Progress */
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #222;
+    border-radius: 2px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .progress-bar.active { display: block; }
+
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #c9a84c, #f5d98e);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .status {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 20px;
+    min-height: 20px;
+  }
+
+  /* Batch grid */
+  .batch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .batch-item {
+    position: relative;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+
+  .batch-item:hover { border-color: #c9a84c; }
+  .batch-item.selected { border-color: #c9a84c; border-width: 2px; }
+
+  .batch-item img {
+    width: 100%;
+    aspect-ratio: 9/16;
+    object-fit: cover;
+    display: block;
+  }
+
+  .batch-item .badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .badge.pending { background: #333; color: #888; }
+  .badge.done { background: #2d7a3a; color: #fff; }
+  .badge.processing { background: #c9a84c; color: #000; }
+
+  .batch-item .remove-btn {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #000000aa;
+    color: #ff4444;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .batch-item:hover .remove-btn { display: flex; }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    .workspace { grid-template-columns: 1fr; }
+    .container { padding: 16px; }
+    .app-header { padding: 16px 20px; }
+    .app-header h1 { font-size: 20px; }
+  }
+
+  /* Download all */
+  .download-all-area {
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* Watermark */
+  .watermark-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #888;
+    margin-left: auto;
+  }
+
+  .watermark-opt input[type="checkbox"] {
+    accent-color: #c9a84c;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Hardcore Fitness 101</h1>
+    <div class="subtitle">Cinematic Photo Enhancer</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="prompt-banner">
+    <h3>Enhancement Profile Active</h3>
+    <p>
+      <strong>Ultra-HD Sharpening</strong> with realistic skin texture &bull;
+      <strong>Dynamic Range &amp; Clarity</strong> boost &bull;
+      <strong>Cinematic Color Grading</strong> — warm highlights, deep shadows &bull;
+      <strong>Noise &amp; Artifact Reduction</strong> &bull;
+      <strong>Film Grain</strong> &bull;
+      <strong>9:16 Portrait Crop</strong> &bull;
+      Photorealism preserved — no identity or pose changes
+    </p>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="uploadZone">
+    <svg viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+    <h2>Drop Photos Here</h2>
+    <p>or click to browse &mdash; supports JPG, PNG, WebP (multiple files OK)</p>
+    <input type="file" id="fileInput" accept="image/*" multiple />
+  </div>
+
+  <!-- Batch thumbnails -->
+  <div class="batch-grid" id="batchGrid"></div>
+
+  <!-- Controls -->
+  <div class="controls" id="controlBar" style="display:none;">
+    <button class="btn btn-primary" id="enhanceBtn" onclick="processAll()">Enhance All</button>
+    <button class="btn btn-secondary" id="toggleSettings" onclick="toggleSettings()">Adjust Settings</button>
+    <button class="btn btn-download" id="downloadAllBtn" style="display:none;" onclick="downloadAll()">Download All</button>
+    <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    <label class="watermark-opt">
+      <input type="checkbox" id="watermarkCheck" checked /> Add watermark
+    </label>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Fine-Tune Enhancement</h3>
+    <div class="slider-grid">
+      <div class="slider-group">
+        <label>Sharpness <span id="sharpVal">70</span>%</label>
+        <input type="range" id="sharpness" min="0" max="100" value="70" oninput="updateLabel('sharpVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Clarity <span id="clarityVal">60</span>%</label>
+        <input type="range" id="clarity" min="0" max="100" value="60" oninput="updateLabel('clarityVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Warmth <span id="warmthVal">55</span>%</label>
+        <input type="range" id="warmth" min="0" max="100" value="55" oninput="updateLabel('warmthVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Shadow Depth <span id="shadowVal">65</span>%</label>
+        <input type="range" id="shadows" min="0" max="100" value="65" oninput="updateLabel('shadowVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Highlight Glow <span id="highlightVal">50</span>%</label>
+        <input type="range" id="highlights" min="0" max="100" value="50" oninput="updateLabel('highlightVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Film Grain <span id="grainVal">25</span>%</label>
+        <input type="range" id="grain" min="0" max="100" value="25" oninput="updateLabel('grainVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Noise Reduction <span id="denoiseVal">50</span>%</label>
+        <input type="range" id="denoise" min="0" max="100" value="50" oninput="updateLabel('denoiseVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Contrast <span id="contrastVal">55</span>%</label>
+        <input type="range" id="contrast" min="0" max="100" value="55" oninput="updateLabel('contrastVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Saturation <span id="satVal">45</span>%</label>
+        <input type="range" id="saturation" min="0" max="100" value="45" oninput="updateLabel('satVal', this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Vignette <span id="vignetteVal">40</span>%</label>
+        <input type="range" id="vignette" min="0" max="100" value="40" oninput="updateLabel('vignetteVal', this.value)">
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar"><div class="fill" id="progressFill"></div></div>
+  <div class="status" id="status"></div>
+
+  <!-- Workspace -->
+  <div class="workspace" id="workspace" style="display:none;">
+    <div class="canvas-panel">
+      <div class="label">Original</div>
+      <canvas id="originalCanvas"></canvas>
+    </div>
+    <div class="canvas-panel">
+      <div class="label">Enhanced</div>
+      <canvas id="enhancedCanvas"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// State
+let photos = []; // { file, originalUrl, enhanced: false, blob: null }
+let selectedIdx = 0;
+let processing = false;
+
+// DOM
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const batchGrid = document.getElementById('batchGrid');
+const controlBar = document.getElementById('controlBar');
+const workspace = document.getElementById('workspace');
+const originalCanvas = document.getElementById('originalCanvas');
+const enhancedCanvas = document.getElementById('enhancedCanvas');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const statusEl = document.getElementById('status');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+
+// Upload handlers
+uploadZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => addFiles(e.target.files));
+
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  addFiles(e.dataTransfer.files);
+});
+
+function addFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const url = URL.createObjectURL(f);
+    photos.push({ file: f, originalUrl: url, enhanced: false, blob: null });
+  }
+  renderBatch();
+  if (photos.length > 0) {
+    controlBar.style.display = 'flex';
+    selectPhoto(photos.length - 1);
+  }
+}
+
+function renderBatch() {
+  batchGrid.innerHTML = '';
+  photos.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'batch-item' + (i === selectedIdx ? ' selected' : '');
+    div.innerHTML = `
+      <img src="${p.blob ? URL.createObjectURL(p.blob) : p.originalUrl}" />
+      <div class="badge ${p.enhanced ? 'done' : 'pending'}">${p.enhanced ? '✓' : (i + 1)}</div>
+      <button class="remove-btn" onclick="event.stopPropagation();removePhoto(${i})">×</button>
+    `;
+    div.addEventListener('click', () => selectPhoto(i));
+    batchGrid.appendChild(div);
+  });
+}
+
+function selectPhoto(idx) {
+  selectedIdx = idx;
+  renderBatch();
+  showInWorkspace(idx);
+}
+
+function showInWorkspace(idx) {
+  const p = photos[idx];
+  if (!p) return;
+  workspace.style.display = 'grid';
+
+  const img = new Image();
+  img.onload = () => {
+    // Show original in 9:16 crop preview
+    drawCropped(originalCanvas, img);
+
+    if (p.enhanced && p.blob) {
+      const eImg = new Image();
+      eImg.onload = () => drawCropped(enhancedCanvas, eImg);
+      eImg.src = URL.createObjectURL(p.blob);
+    } else {
+      const ectx = enhancedCanvas.getContext('2d');
+      enhancedCanvas.width = 450;
+      enhancedCanvas.height = 800;
+      ectx.fillStyle = '#111';
+      ectx.fillRect(0, 0, 450, 800);
+      ectx.fillStyle = '#333';
+      ectx.font = '14px Inter, sans-serif';
+      ectx.textAlign = 'center';
+      ectx.fillText('Click "Enhance All" to process', 225, 400);
+    }
+  };
+  img.src = p.originalUrl;
+}
+
+function drawCropped(canvas, img) {
+  // 9:16 crop from center
+  const targetRatio = 9 / 16;
+  const imgRatio = img.width / img.height;
+  let sx, sy, sw, sh;
+
+  if (imgRatio > targetRatio) {
+    sh = img.height;
+    sw = img.height * targetRatio;
+    sx = (img.width - sw) / 2;
+    sy = 0;
+  } else {
+    sw = img.width;
+    sh = img.width / targetRatio;
+    sx = 0;
+    sy = (img.height - sh) / 2;
+  }
+
+  // Output size — cap at reasonable resolution
+  const maxW = 1080;
+  const outW = Math.min(maxW, sw);
+  const outH = outW / targetRatio;
+
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+}
+
+function removePhoto(idx) {
+  URL.revokeObjectURL(photos[idx].originalUrl);
+  photos.splice(idx, 1);
+  if (selectedIdx >= photos.length) selectedIdx = Math.max(0, photos.length - 1);
+  renderBatch();
+  if (photos.length === 0) {
+    controlBar.style.display = 'none';
+    workspace.style.display = 'none';
+    downloadAllBtn.style.display = 'none';
+  } else {
+    showInWorkspace(selectedIdx);
+  }
+}
+
+function clearAll() {
+  photos.forEach(p => URL.revokeObjectURL(p.originalUrl));
+  photos = [];
+  selectedIdx = 0;
+  renderBatch();
+  controlBar.style.display = 'none';
+  workspace.style.display = 'none';
+  downloadAllBtn.style.display = 'none';
+  statusEl.textContent = '';
+}
+
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('visible');
+}
+
+function updateLabel(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+// --- IMAGE PROCESSING ENGINE ---
+
+function getSettings() {
+  return {
+    sharpness: +document.getElementById('sharpness').value / 100,
+    clarity: +document.getElementById('clarity').value / 100,
+    warmth: +document.getElementById('warmth').value / 100,
+    shadows: +document.getElementById('shadows').value / 100,
+    highlights: +document.getElementById('highlights').value / 100,
+    grain: +document.getElementById('grain').value / 100,
+    denoise: +document.getElementById('denoise').value / 100,
+    contrast: +document.getElementById('contrast').value / 100,
+    saturation: +document.getElementById('saturation').value / 100,
+    vignette: +document.getElementById('vignette').value / 100,
+  };
+}
+
+function enhance(canvas, img, settings) {
+  // Crop to 9:16
+  const targetRatio = 9 / 16;
+  const imgRatio = img.width / img.height;
+  let sx, sy, sw, sh;
+
+  if (imgRatio > targetRatio) {
+    sh = img.height;
+    sw = img.height * targetRatio;
+    sx = (img.width - sw) / 2;
+    sy = 0;
+  } else {
+    sw = img.width;
+    sh = img.width / targetRatio;
+    sx = 0;
+    sy = (img.height - sh) / 2;
+  }
+
+  const outW = Math.min(1080, Math.round(sw));
+  const outH = Math.round(outW / targetRatio);
+
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+
+  // Draw base
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+
+  let imageData = ctx.getImageData(0, 0, outW, outH);
+  let d = imageData.data;
+
+  // 1. Noise reduction (simple box blur pass)
+  if (settings.denoise > 0.1) {
+    d = boxBlurPass(d, outW, outH, Math.round(settings.denoise * 2));
+    imageData.data.set(d);
+  }
+
+  // 2. Contrast & Dynamic Range
+  applyContrast(d, settings.contrast);
+
+  // 3. Clarity (local contrast via unsharp mask at large radius concept — simplified)
+  if (settings.clarity > 0.1) {
+    applyClarity(d, outW, outH, settings.clarity);
+  }
+
+  // 4. Sharpening (unsharp mask)
+  if (settings.sharpness > 0.1) {
+    applySharpen(d, outW, outH, settings.sharpness);
+  }
+
+  // 5. Color grading — warm highlights, cool shadows, cinematic
+  applyColorGrade(d, settings);
+
+  // 6. Saturation
+  applySaturation(d, settings.saturation);
+
+  ctx.putImageData(imageData, 0, 0);
+
+  // 7. Vignette (draw with canvas gradients for smoothness)
+  if (settings.vignette > 0.05) {
+    applyVignette(ctx, outW, outH, settings.vignette);
+  }
+
+  // 8. Film grain overlay
+  if (settings.grain > 0.05) {
+    applyGrain(ctx, outW, outH, settings.grain);
+  }
+
+  // 9. Watermark
+  if (document.getElementById('watermarkCheck').checked) {
+    applyWatermark(ctx, outW, outH);
+  }
+}
+
+function boxBlurPass(data, w, h, radius) {
+  if (radius < 1) return data;
+  const out = new Uint8ClampedArray(data);
+  const size = (radius * 2 + 1);
+  const area = size * size;
+
+  for (let y = radius; y < h - radius; y++) {
+    for (let x = radius; x < w - radius; x++) {
+      let r = 0, g = 0, b = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const idx = ((y + dy) * w + (x + dx)) * 4;
+          r += data[idx];
+          g += data[idx + 1];
+          b += data[idx + 2];
+        }
+      }
+      const idx = (y * w + x) * 4;
+      // Blend original with blurred based on denoise strength
+      const blend = 0.4;
+      out[idx] = data[idx] * (1 - blend) + (r / area) * blend;
+      out[idx + 1] = data[idx + 1] * (1 - blend) + (g / area) * blend;
+      out[idx + 2] = data[idx + 2] * (1 - blend) + (b / area) * blend;
+    }
+  }
+  return out;
+}
+
+function applyContrast(d, amount) {
+  const factor = 1 + amount * 0.6; // up to 1.6x contrast
+  const mid = 128;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = clamp((d[i] - mid) * factor + mid);
+    d[i + 1] = clamp((d[i + 1] - mid) * factor + mid);
+    d[i + 2] = clamp((d[i + 2] - mid) * factor + mid);
+  }
+}
+
+function applyClarity(d, w, h, amount) {
+  // Simplified local contrast enhancement
+  const strength = amount * 0.5;
+  const copy = new Uint8ClampedArray(d);
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = (y * w + x) * 4;
+      for (let c = 0; c < 3; c++) {
+        const center = copy[idx + c];
+        const avg = (
+          copy[((y-1)*w+x)*4+c] + copy[((y+1)*w+x)*4+c] +
+          copy[(y*w+x-1)*4+c] + copy[(y*w+x+1)*4+c]
+        ) / 4;
+        const diff = center - avg;
+        d[idx + c] = clamp(center + diff * strength);
+      }
+    }
+  }
+}
+
+function applySharpen(d, w, h, amount) {
+  const strength = amount * 1.2;
+  const copy = new Uint8ClampedArray(d);
+
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const idx = (y * w + x) * 4;
+      for (let c = 0; c < 3; c++) {
+        const center = copy[idx + c] * (1 + 4 * strength);
+        const neighbors =
+          copy[((y-1)*w+x)*4+c] * strength +
+          copy[((y+1)*w+x)*4+c] * strength +
+          copy[(y*w+x-1)*4+c] * strength +
+          copy[(y*w+x+1)*4+c] * strength;
+        d[idx + c] = clamp(center - neighbors);
+      }
+    }
+  }
+}
+
+function applyColorGrade(d, s) {
+  // Cinematic warm highlights + deep cool shadows
+  const warmShift = s.warmth * 15;    // red/yellow push in highlights
+  const shadowDeepen = s.shadows * 40; // crush shadows
+  const highlightGlow = s.highlights * 20;
+
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i], g = d[i + 1], b = d[i + 2];
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    const t = lum / 255; // 0=shadow, 1=highlight
+
+    // Shadow treatment: deepen + slight teal/blue tint
+    if (t < 0.4) {
+      const shadowT = 1 - (t / 0.4); // 1 at pure black, 0 at mid
+      r = clamp(r - shadowDeepen * shadowT * 0.3);
+      g = clamp(g - shadowDeepen * shadowT * 0.25);
+      b = clamp(b - shadowDeepen * shadowT * 0.15); // less blue crush = teal shadows
+    }
+
+    // Highlight treatment: warm golden push
+    if (t > 0.6) {
+      const hlT = (t - 0.6) / 0.4; // 0 at mid, 1 at white
+      r = clamp(r + warmShift * hlT);
+      g = clamp(g + warmShift * hlT * 0.7);
+      b = clamp(b - warmShift * hlT * 0.3); // pull blue for warmth
+      // Glow
+      r = clamp(r + highlightGlow * hlT * 0.5);
+      g = clamp(g + highlightGlow * hlT * 0.3);
+    }
+
+    // Midtone color: slight warm nudge
+    if (t > 0.3 && t < 0.7) {
+      r = clamp(r + warmShift * 0.15);
+      g = clamp(g + warmShift * 0.05);
+    }
+
+    d[i] = r;
+    d[i + 1] = g;
+    d[i + 2] = b;
+  }
+}
+
+function applySaturation(d, amount) {
+  // amount 0-1, where 0.5 = neutral, <0.5 desaturate, >0.5 boost
+  const factor = 0.6 + amount * 0.9; // range ~0.6 to 1.5
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+    d[i] = clamp(lum + (d[i] - lum) * factor);
+    d[i+1] = clamp(lum + (d[i+1] - lum) * factor);
+    d[i+2] = clamp(lum + (d[i+2] - lum) * factor);
+  }
+}
+
+function applyVignette(ctx, w, h, amount) {
+  const gradient = ctx.createRadialGradient(w/2, h/2, w * 0.25, w/2, h/2, h * 0.75);
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(0.5, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, `rgba(0,0,0,${amount * 0.85})`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function applyGrain(ctx, w, h, amount) {
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const d = imageData.data;
+  const intensity = amount * 30;
+
+  for (let i = 0; i < d.length; i += 4) {
+    const noise = (Math.random() - 0.5) * intensity;
+    d[i] = clamp(d[i] + noise);
+    d[i+1] = clamp(d[i+1] + noise);
+    d[i+2] = clamp(d[i+2] + noise);
+  }
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function applyWatermark(ctx, w, h) {
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${Math.round(w * 0.04)}px Oswald, sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('HARDCORE FITNESS 101', w - 20, h - 20);
+  ctx.restore();
+}
+
+function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+// --- BATCH PROCESSING ---
+
+async function processAll() {
+  if (processing || photos.length === 0) return;
+  processing = true;
+  document.getElementById('enhanceBtn').disabled = true;
+  progressBar.classList.add('active');
+
+  const settings = getSettings();
+  const tempCanvas = document.createElement('canvas');
+
+  for (let i = 0; i < photos.length; i++) {
+    const pct = ((i) / photos.length) * 100;
+    progressFill.style.width = pct + '%';
+    statusEl.textContent = `Processing photo ${i + 1} of ${photos.length}...`;
+
+    // Update batch badge
+    photos[i]._processing = true;
+    renderBatch();
+
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        enhance(tempCanvas, img, settings);
+
+        tempCanvas.toBlob((blob) => {
+          photos[i].blob = blob;
+          photos[i].enhanced = true;
+          photos[i]._processing = false;
+
+          // If this is the selected photo, update workspace
+          if (i === selectedIdx) {
+            const eImg = new Image();
+            eImg.onload = () => {
+              enhancedCanvas.width = tempCanvas.width;
+              enhancedCanvas.height = tempCanvas.height;
+              enhancedCanvas.getContext('2d').drawImage(eImg, 0, 0);
+            };
+            eImg.src = URL.createObjectURL(blob);
+          }
+          resolve();
+        }, 'image/jpeg', 0.95);
+      };
+      img.src = photos[i].originalUrl;
+    });
+
+    renderBatch();
+  }
+
+  progressFill.style.width = '100%';
+  statusEl.textContent = `Done! ${photos.length} photo${photos.length > 1 ? 's' : ''} enhanced.`;
+  downloadAllBtn.style.display = 'inline-flex';
+  processing = false;
+  document.getElementById('enhanceBtn').disabled = false;
+
+  setTimeout(() => {
+    progressBar.classList.remove('active');
+  }, 1500);
+
+  // Show the last processed in workspace
+  showInWorkspace(selectedIdx);
+  renderBatch();
+}
+
+function downloadAll() {
+  photos.forEach((p, i) => {
+    if (!p.blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(p.blob);
+    const name = p.file.name.replace(/\.[^.]+$/, '');
+    a.download = `${name}_enhanced.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+}
+</script>
+</body>
+</html>
