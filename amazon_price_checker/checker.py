@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
 """
 Amazon Pricing Error Checker
-Scrapes Amazon category pages and flags pricing anomalies via terminal output + Twilio SMS.
+Scrapes Amazon category pages, flags pricing anomalies, and saves a PDF report.
 
 Usage:
     python checker.py
 
 Setup:
     1. pip install -r requirements.txt
-    2. cp .env.example .env
-    3. Fill in your Twilio credentials in .env
+    2. (optional) cp .env.example .env to customise thresholds
 """
 
 from datetime import datetime
 
 from analyzer import analyze_products
 from config import load_config
-from notifier import send_sms
+from notifier import generate_pdf
 from scraper import CATEGORIES, fetch_product_detail, scrape_category
 
 MENU_CATEGORIES = list(CATEGORIES.keys())
@@ -142,10 +141,11 @@ def run() -> None:
     print()
 
     if all_anomalies:
-        print("Sending SMS alert...")
-        send_sms(all_anomalies, selected_categories, config)
+        print("Generating PDF report...")
+        pdf_path = generate_pdf(all_anomalies, selected_categories, config["pdf_output_dir"])
+        print(f"  Report saved: {pdf_path}")
     else:
-        print("No pricing errors detected. No SMS sent.")
+        print("No pricing errors detected. No PDF generated.")
 
     print()
 
