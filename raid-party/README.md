@@ -5,7 +5,7 @@ When another seller raids your show, you type their name in a small panel inside
 | Time | What happens |
 |---|---|
 | 0–1.4s | A silver mirror ball comes down under a spotlight while a whoosh builds |
-| 1.4s | The lights come on: light spots fill the room, blue and pink lasers fade in, and **RAID FROM @TheirName** appears (with the number of raiders if you enter it) |
+| 1.4s | The lights come on: light spots fill the room, blue and pink lasers fade in, and **RAID FROM @TheirName** appears with their profile picture in a pink and blue ring, a badge (**FIRST RAID**, **3RD RAID**, **BIGGEST RAID THIS MONTH**) and the number of raiders if you enter it |
 | 7.4s | The music lifts, a two-tone laser fan opens and more foil falls. The message changes to **"Tap follow so you never miss a break!"** |
 | 11.4s | The name hands over to your **DateNight Breaks logo** with a glow |
 | 13.6–15s | Everything fades out and the ball goes back up |
@@ -55,14 +55,29 @@ To hear the music yourself, set the source to **Monitor and Output** in **Edit �
 
 ### Using it on a raid
 1. Type the raider's name, and how many raiders came if you know it.
-2. Press **Enter** or click **START RAID PARTY**.
-3. Recent raiders are saved as buttons, so a repeat raider is one click away.
+2. Optional: add their **profile picture**. Click the round **+ Photo** button, drag an image onto the panel, or copy an image and press **⌘V**. On your phone, open their Whatnot profile, screenshot it and AirDrop it to your Mac. The panel crops it to a circle and remembers it for next time.
+3. Press **Enter** or click **START RAID PARTY**.
 
-Use **Play without name** if you didn't catch the name, and **Stop** to end it early. You can change the two messages under **Custom text**.
+### Repeat raiders
+The panel remembers everyone who raids you. Under the name box it tells you **"New raider"** or **"Welcome back! They've raided 2×"**, and the overlay shows a badge:
+- **FIRST RAID** for a new raider
+- **2ND RAID**, **3RD RAID**, … for repeat raiders
+- **BIGGEST RAID THIS MONTH** when the raider count beats every other raid this month (once there have been at least 2 others)
+
+The **Raiders** list shows each seller with their photo and raid count (e.g. ×3). Click one to fill in their name and photo. Pressing go again for the same seller within 10 minutes counts as the same raid. If you trigger it by mistake, click **Don't count this raid**. You can turn badges off in **Settings**.
+
+### Clips to send the raider
+Every raid party is saved as a video clip with OBS's **Replay Buffer**. Send it to the seller who raided you; they'll often repost it.
+
+One-time setup in OBS: **Settings → Output → Replay Buffer** → tick **Enable Replay Buffer**, and set **Maximum Replay Time** to at least **20 seconds** (the default is 20). For clips that play on phones, set **Settings → Output → Recording → Recording Format** to **MP4** (or **Hybrid MP4**).
+
+The panel starts the Replay Buffer by itself if it's off, and saves the clip when the party ends. The **Raid clips** list shows each clip with a **Copy path** button. Clips go to your OBS recording folder (**Settings → Output → Recording Path**, usually **Movies**). If clips aren't wanted, turn them off in **Settings**.
+
+Use **Play without name** if you didn't catch the name, and **Stop** to end it early. You can change the two messages under **Settings**.
 
 ## 4. TourBox Elite button (optional)
 
-A TourBox button replays the party with the **last name you used in the panel**, or the no-name version if you haven't used it yet.
+A TourBox button replays the party with the **last name, photo and badge you used in the panel**, or the no-name version if you haven't used it yet.
 
 1. OBS → **Settings → Hotkeys**. Under the `Overlays` scene, set **Show 'Raid Party'** (e.g. `⌃⌥⌘R`) and **Hide 'Raid Party'** (e.g. `⌃⌥⌘H`).
 2. **TourBox Console** → your OBS preset → pick a button → **Macro**: `⌃⌥⌘H` → delay `100 ms` → `⌃⌥⌘R`.

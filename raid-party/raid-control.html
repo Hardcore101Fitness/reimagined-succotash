@@ -6,9 +6,11 @@
 <title>Raid Control</title>
 <!--
   DATENIGHT BREAKS — RAID CONTROL panel.
-  Add it to OBS as a dock: View -> Docks -> Custom Browser Docks, URL = file:///.../raid-party/raid-control.html
-  It talks to OBS through OBS's built-in WebSocket server (Tools -> WebSocket Server Settings)
-  and tells the overlay (datenight-raid.html) who raided you.
+  Add it to OBS as a dock: Docks -> Custom Browser Docks, URL = file:///.../raid-party/raid-control.html
+  Talks to OBS through its built-in WebSocket server (Tools -> WebSocket Server Settings).
+  - sends the raider's name, photo, raid count and badge to the overlay (datenight-raid.html)
+  - remembers every raider so repeat raiders get "2ND RAID", "3RD RAID"...
+  - saves a clip of each raid party with OBS's Replay Buffer
 -->
 <style>
   @font-face { font-family: "DN Anton"; src: url("assets/Anton-Regular.ttf") format("truetype"); }
@@ -24,14 +26,24 @@
   .dot { width: 9px; height: 9px; border-radius: 50%; background: #e5484d; box-shadow: 0 0 8px #e5484d; }
   .dot.ok { background: #30d158; box-shadow: 0 0 8px #30d158; }
   .dot.wait { background: #ffb224; box-shadow: 0 0 8px #ffb224; }
-  label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
-  input { width: 100%; padding: 12px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text);
-          font: 600 16px "DN Montserrat", -apple-system, Arial, sans-serif; outline: none; }
+  label, .lbl { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+  input[type=text], input[type=password], input:not([type]) { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel);
+          color: var(--text); font: 600 16px "DN Montserrat", -apple-system, Arial, sans-serif; outline: none; }
   input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(20,200,250,.18); }
-  .row { display: grid; grid-template-columns: 1fr 96px; gap: 10px; }
+  .who { display: grid; grid-template-columns: 64px 1fr 84px; gap: 10px; align-items: end; }
+  .row2 { display: grid; grid-template-columns: 1fr 96px; gap: 10px; }
   .at { position: relative; }
   .at input { padding-left: 30px; }
   .at::before { content: "@"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 700; font-size: 16px; }
+  .avatar { position: relative; width: 64px; height: 64px; border-radius: 50%; padding: 0; border: 2px dashed #3d3948; background: var(--panel) center/cover no-repeat;
+            color: var(--muted); font: 700 10px/1.15 "DN Montserrat", Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; cursor: pointer; }
+  .avatar.has { border: 3px solid transparent; background-origin: border-box;
+                box-shadow: 0 0 0 2px var(--pink), 0 0 14px rgba(255,0,168,.45); color: transparent; }
+  .avatar .x { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; background: #2a2733; color: #fff;
+               font: 700 13px/20px Arial, sans-serif; display: none; }
+  .avatar.has .x { display: block; }
+  .hintline { font-size: 12px; color: var(--muted); margin-top: -4px; min-height: 15px; }
+  .hintline b { color: var(--pink); }
   button { font: 700 14px "DN Montserrat", -apple-system, Arial, sans-serif; border-radius: 10px; border: 1px solid var(--line); background: var(--panel);
            color: var(--text); padding: 10px 12px; cursor: pointer; }
   button:hover { border-color: #3d3948; }
@@ -40,20 +52,33 @@
         background: linear-gradient(90deg, var(--blue), var(--pink)); box-shadow: 0 6px 24px rgba(255,0,168,.25); }
   #go:active { transform: translateY(1px); }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 8px; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; font-size: 13px; font-weight: 600;
           background: var(--panel); border: 1px solid var(--line); cursor: pointer; }
   .chip:hover { border-color: var(--pink); }
-  .chip small { color: var(--muted); font-weight: 500; }
+  .chip i { width: 24px; height: 24px; border-radius: 50%; background: #2a2733 center/cover no-repeat; display: inline-flex; align-items: center; justify-content: center;
+            font: 700 11px Arial, sans-serif; font-style: normal; color: var(--muted); }
+  .chip small { color: var(--pink); font-weight: 700; }
   .empty { color: var(--muted); font-size: 12px; }
+  .clips { display: grid; gap: 6px; }
+  .clip { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); }
+  .clip .t { font-weight: 700; font-size: 13px; }
+  .clip .p { font-size: 11px; color: var(--muted); word-break: break-all; }
+  .clip.pending .p { color: #ffb224; }
+  .clip.failed .p { color: #ff6b6b; }
+  .clip button { padding: 6px 10px; font-size: 12px; }
   details { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #110f17; }
   summary { cursor: pointer; font-weight: 700; font-size: 13px; color: var(--muted); }
   details[open] summary { margin-bottom: 10px; }
   details .grid { display: grid; gap: 10px; }
+  .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+  .check input { margin-top: 2px; accent-color: var(--pink); }
   .msg { font-size: 12px; color: var(--muted); min-height: 16px; }
   .msg.err { color: #ff6b6b; }
   .msg.ok { color: #30d158; }
+  .msg a { color: var(--blue); cursor: pointer; text-decoration: underline; margin-left: 6px; }
   .help { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 0; }
+  body.drag main { outline: 2px dashed var(--pink); outline-offset: -6px; border-radius: 14px; }
 </style>
 </head>
 <body>
@@ -63,7 +88,12 @@
     <div class="status" id="status" title="Connection settings"><span class="dot" id="dot"></span><span id="statusText">Not connected</span></div>
   </header>
 
-  <div class="row">
+  <div class="who">
+    <div>
+      <span class="lbl">Photo</span>
+      <button class="avatar" id="avatar" type="button" title="Add their profile picture: click, drop an image, or paste (⌘V)">+ Photo<span class="x" id="avatarClear" title="Remove photo">×</span></button>
+      <input type="file" id="file" accept="image/*" hidden>
+    </div>
     <div>
       <label for="name">Who raided you?</label>
       <div class="at"><input id="name" placeholder="SellerName" autocomplete="off" spellcheck="false" maxlength="24"></div>
@@ -73,6 +103,7 @@
       <input id="count" inputmode="numeric" placeholder="#" maxlength="5">
     </div>
   </div>
+  <div class="hintline" id="who"></div>
 
   <button id="go" disabled>START RAID PARTY</button>
   <div class="actions">
@@ -82,13 +113,22 @@
   <div class="msg" id="msg"></div>
 
   <div>
-    <label>Recent raiders</label>
+    <span class="lbl">Raiders</span>
     <div class="chips" id="recent"></div>
   </div>
 
+  <div>
+    <span class="lbl">Raid clips</span>
+    <div class="clips" id="clips"></div>
+  </div>
+
   <details>
-    <summary>Custom text (optional)</summary>
+    <summary>Settings</summary>
     <div class="grid">
+      <label class="check" style="color:var(--text);letter-spacing:0;text-transform:none;font-size:13px;font-weight:600">
+        <input type="checkbox" id="clipOn" checked> Save a clip of every raid party (OBS Replay Buffer)</label>
+      <label class="check" style="color:var(--text);letter-spacing:0;text-transform:none;font-size:13px;font-weight:600">
+        <input type="checkbox" id="badgeOn" checked> Show raid badge (FIRST RAID, 3RD RAID, BIGGEST RAID THIS MONTH)</label>
       <div><label for="sub">Line under the name</label><input id="sub" placeholder="Welcome to DateNight Breaks!" maxlength="48"></div>
       <div><label for="sub2">Second message</label><input id="sub2" placeholder="Tap follow so you never miss a break!" maxlength="48"></div>
     </div>
@@ -97,7 +137,7 @@
   <details id="conn">
     <summary>OBS connection</summary>
     <div class="grid">
-      <div class="row">
+      <div class="row2">
         <div><label for="host">Host</label><input id="host" value="127.0.0.1" spellcheck="false"></div>
         <div><label for="port">Port</label><input id="port" value="4455" inputmode="numeric"></div>
       </div>
@@ -115,6 +155,8 @@
     get(k, d) { try { const v = localStorage.getItem('dnraid.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem('dnraid.' + k, JSON.stringify(v)); } catch (e) {} }
   };
+  const PARTY_SECONDS = 15;
+  const SAME_RAID_MINUTES = 10;   // pressing go again for the same raider within this window doesn't count as a new raid
 
   // ---------- settings ----------
   $('host').value = store.get('host', '127.0.0.1');
@@ -122,24 +164,29 @@
   $('pw').value = store.get('pw', '');
   $('sub').value = store.get('sub', '');
   $('sub2').value = store.get('sub2', '');
+  $('clipOn').checked = store.get('clipOn', true);
+  $('badgeOn').checked = store.get('badgeOn', true);
   ['sub', 'sub2'].forEach(k => $(k).addEventListener('input', () => store.set(k, $(k).value)));
+  ['clipOn', 'badgeOn'].forEach(k => $(k).addEventListener('change', () => store.set(k, $(k).checked)));
 
   // ---------- obs-websocket v5 ----------
   let ws = null, ready = false, reqId = 0, retry = null, manualClose = false;
   const pending = new Map();
+  const eventHandlers = {};
 
   function setStatus(state, text) {
     $('dot').className = 'dot' + (state === 'ok' ? ' ok' : state === 'wait' ? ' wait' : '');
     $('statusText').textContent = text;
     ['go', 'noName', 'stop'].forEach(id => $(id).disabled = state !== 'ok');
   }
-  function say(text, kind) { const m = $('msg'); m.textContent = text || ''; m.className = 'msg' + (kind ? ' ' + kind : ''); }
-
+  function say(text, kind, action) {
+    const m = $('msg'); m.textContent = text || ''; m.className = 'msg' + (kind ? ' ' + kind : '');
+    if (action) { const a = document.createElement('a'); a.textContent = action.label; a.onclick = action.fn; m.appendChild(a); }
+  }
   async function sha256b64(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return btoa(String.fromCharCode(...new Uint8Array(buf)));
   }
-
   function connect() {
     clearTimeout(retry);
     if (ws) { manualClose = true; try { ws.close(); } catch (e) {} }
@@ -152,8 +199,8 @@
     ws = sock;
     sock.onmessage = async ev => {
       let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-      if (m.op === 0) {                       // Hello
-        const ident = { rpcVersion: 1, eventSubscriptions: 0 };
+      if (m.op === 0) {
+        const ident = { rpcVersion: 1, eventSubscriptions: 64 };   // 64 = output events (Replay Buffer saved)
         const a = m.d.authentication;
         if (a) {
           const pw = $('pw').value;
@@ -161,11 +208,12 @@
           ident.authentication = await sha256b64((await sha256b64(pw + a.salt)) + a.challenge);
         }
         sock.send(JSON.stringify({ op: 1, d: ident }));
-      } else if (m.op === 2) {                // Identified
+      } else if (m.op === 2) {
         ready = true; setStatus('ok', 'Connected to OBS'); say(''); $('conn').open = false; $('name').focus();
-      } else if (m.op === 7) {                // RequestResponse
-        const p = pending.get(m.d.requestId);
-        if (p) { pending.delete(m.d.requestId); p(m.d); }
+      } else if (m.op === 5) {
+        const h = eventHandlers[m.d.eventType]; if (h) h(m.d.eventData || {});
+      } else if (m.op === 7) {
+        const p = pending.get(m.d.requestId); if (p) { pending.delete(m.d.requestId); p(m.d); }
       }
     };
     sock.onclose = ev => {
@@ -177,72 +225,241 @@
     };
     sock.onerror = () => {};
   }
-
   function request(requestType, requestData) {
     return new Promise((resolve, reject) => {
       if (!ready) { reject(new Error('Not connected to OBS')); return; }
       const requestId = 'r' + (++reqId);
       pending.set(requestId, resolve);
       ws.send(JSON.stringify({ op: 6, d: { requestType, requestId, requestData } }));
-      setTimeout(() => { if (pending.delete(requestId)) reject(new Error('OBS did not answer')); }, 4000);
+      setTimeout(() => { if (pending.delete(requestId)) reject(new Error('OBS did not answer')); }, 5000);
     });
   }
-
-  // Sends a JS event to every OBS browser source (the overlay listens for "raidparty")
+  const okResp = r => r && r.requestStatus && r.requestStatus.result;
   async function emit(detail) {
     try {
-      const r = await request('CallVendorRequest', {
-        vendorName: 'obs-browser', requestType: 'emit_event',
-        requestData: { event_name: 'raidparty', event_data: detail }
-      });
-      if (!r.requestStatus || !r.requestStatus.result) throw new Error((r.requestStatus && r.requestStatus.comment) || 'OBS refused the request');
+      const r = await request('CallVendorRequest', { vendorName: 'obs-browser', requestType: 'emit_event', requestData: { event_name: 'raidparty', event_data: detail } });
+      if (!okResp(r)) throw new Error((r.requestStatus && r.requestStatus.comment) || 'OBS refused the request');
       return true;
     } catch (e) { say(e.message, 'err'); return false; }
   }
 
-  // ---------- recent raiders ----------
-  let recent = store.get('recent', []);
-  function renderRecent() {
+  // ---------- raider photo ----------
+  let avatar = null, avatarManual = false;
+  function setAvatar(data, manual) {
+    avatar = data || null; avatarManual = !!(data && manual);
+    const b = $('avatar');
+    b.classList.toggle('has', !!avatar);
+    b.style.backgroundImage = avatar ? `url("${avatar}")` : '';
+  }
+  function loadImageFile(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+      const g = c.getContext('2d'), side = Math.min(img.naturalWidth, img.naturalHeight);
+      g.fillStyle = '#111'; g.fillRect(0, 0, S, S);
+      g.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, S, S);
+      setAvatar(c.toDataURL('image/jpeg', 0.86), true);
+      URL.revokeObjectURL(url); updateWho();
+    };
+    img.onerror = () => { say('Couldn’t read that image.', 'err'); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  $('avatar').addEventListener('click', e => {
+    if (e.target === $('avatarClear')) { e.stopPropagation(); setAvatar(null, false); avatarManual = true; updateWho(); return; }
+    $('file').click();
+  });
+  $('file').addEventListener('change', () => { loadImageFile($('file').files[0]); $('file').value = ''; });
+  addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('drag'); });
+  addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('drag'); });
+  addEventListener('drop', e => {
+    e.preventDefault(); document.body.classList.remove('drag');
+    const f = [...(e.dataTransfer.files || [])].find(f => /^image\//.test(f.type));
+    if (f) loadImageFile(f);
+  });
+  addEventListener('paste', e => {
+    const item = [...(e.clipboardData && e.clipboardData.items || [])].find(i => /^image\//.test(i.type));
+    if (item) { e.preventDefault(); loadImageFile(item.getAsFile()); }
+  });
+
+  // ---------- raider history ----------
+  let raiders = store.get('raiders', null);
+  if (!raiders) {                       // carry over the earlier "recent" list
+    raiders = {};
+    store.get('recent', []).forEach((r, i) => { raiders[r.name.toLowerCase()] = { name: r.name, avatar: null, raids: [{ ts: Date.now() - (i + 1) * 864e5, count: r.count || 0 }] }; });
+  }
+  const saveRaiders = () => {
+    try { localStorage.setItem('dnraid.raiders', JSON.stringify(raiders)); }
+    catch (e) { say('Panel storage is full: some old raider photos may not be kept.', 'err'); }
+  };
+  const ordinal = n => { const s = ['TH', 'ST', 'ND', 'RD'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+  const lastTs = r => r.raids.length ? r.raids[r.raids.length - 1].ts : 0;
+
+  function plan(name, count) {
+    const key = name.toLowerCase(), r = raiders[key], now = Date.now();
+    const prior = r ? r.raids : [];
+    const last = prior[prior.length - 1];
+    const same = !!(last && now - last.ts < SAME_RAID_MINUTES * 60e3);
+    const n = same ? prior.length : prior.length + 1;
+    const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+    const others = [];
+    Object.entries(raiders).forEach(([k, x]) => x.raids.forEach((rd, i) => {
+      if (rd.ts < m0.getTime()) return;
+      if (k === key && same && i === x.raids.length - 1) return;
+      others.push(rd.count || 0);
+    }));
+    const biggest = count > 0 && others.length >= 2 && count > Math.max(...others);
+    const badge = biggest ? 'BIGGEST RAID THIS MONTH' : n === 1 ? 'FIRST RAID' : `${ordinal(n)} RAID`;
+    return { key, n, same, biggest, badge };
+  }
+
+  function renderRaiders() {
     const box = $('recent'); box.innerHTML = '';
-    if (!recent.length) { box.innerHTML = '<span class="empty">Names you use will show up here.</span>'; return; }
-    recent.forEach(r => {
+    const list = Object.values(raiders).sort((a, b) => lastTs(b) - lastTs(a)).slice(0, 12);
+    if (!list.length) { box.innerHTML = '<span class="empty">Everyone who raids you shows up here, with how many times they’ve raided.</span>'; return; }
+    list.forEach(r => {
       const b = document.createElement('button'); b.className = 'chip'; b.type = 'button';
-      b.textContent = '@' + r.name;
-      if (r.count) { const s = document.createElement('small'); s.textContent = r.count; b.appendChild(s); }
-      b.title = 'Fill in ' + r.name;
-      b.onclick = () => { $('name').value = r.name; $('count').value = r.count || ''; $('name').focus(); };
+      const i = document.createElement('i');
+      if (r.avatar) i.style.backgroundImage = `url("${r.avatar}")`; else i.textContent = r.name[0].toUpperCase();
+      b.appendChild(i);
+      b.appendChild(document.createTextNode('@' + r.name));
+      if (r.raids.length > 1) { const s = document.createElement('small'); s.textContent = '×' + r.raids.length; b.appendChild(s); }
+      const last = r.raids[r.raids.length - 1];
+      b.title = `${r.raids.length} raid${r.raids.length > 1 ? 's' : ''} · last ${new Date(last.ts).toLocaleDateString()}${last.count ? ` · ${last.count} raiders` : ''}`;
+      b.onclick = () => { $('name').value = r.name; $('count').value = ''; setAvatar(r.avatar, false); updateWho(); $('count').focus(); };
       box.appendChild(b);
     });
   }
-  function remember(name, count) {
-    recent = [{ name, count }, ...recent.filter(r => r.name.toLowerCase() !== name.toLowerCase())].slice(0, 8);
-    store.set('recent', recent); renderRecent();
-  }
-  renderRecent();
 
-  // ---------- actions ----------
   const cleanName = () => $('name').value.trim().replace(/^@+/, '').replace(/\s+/g, '').slice(0, 24);
   const cleanCount = () => { const v = parseInt($('count').value.replace(/[^0-9]/g, ''), 10); return Number.isFinite(v) && v > 0 ? v : 0; };
 
+  function updateWho() {
+    const name = cleanName(), el = $('who');
+    if (!name) { el.textContent = ''; return; }
+    const r = raiders[name.toLowerCase()];
+    if (!avatarManual) setAvatar(r && r.avatar, false);
+    const p = plan(name, cleanCount());
+    el.innerHTML = '';
+    const b = document.createElement('b'); b.textContent = p.badge;
+    el.append(p.same ? 'Replaying this raid · badge: ' : (r ? `Welcome back! They’ve raided ${r.raids.length}× · badge: ` : 'New raider · badge: '), b);
+  }
+  $('name').addEventListener('input', () => { avatarManual = avatarManual && !!avatar; updateWho(); });
+  $('count').addEventListener('input', () => { $('count').value = $('count').value.replace(/[^0-9]/g, ''); updateWho(); });
+
+  // ---------- clips (Replay Buffer) ----------
+  let clips = store.get('clips', []);
+  clips.forEach(c => { if (c.state === 'pending') c.state = 'failed'; });
+  let clipTimer = null, waiting = null;
+  function renderClips() {
+    const box = $('clips'); box.innerHTML = '';
+    if (!$('clipOn').checked && !clips.length) { box.innerHTML = '<span class="empty">Clip saving is off (Settings).</span>'; return; }
+    if (!clips.length) { box.innerHTML = '<span class="empty">Each raid party is saved as a video clip you can send to the raider.</span>'; return; }
+    clips.slice(0, 6).forEach(c => {
+      const row = document.createElement('div'); row.className = 'clip ' + c.state;
+      const info = document.createElement('div');
+      const t = document.createElement('div'); t.className = 't';
+      t.textContent = `${c.name ? '@' + c.name : 'Raid party'} · ${new Date(c.ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+      const p = document.createElement('div'); p.className = 'p';
+      p.textContent = c.state === 'pending' ? 'Saving when the party ends…' : c.state === 'failed' ? (c.error || 'Not saved') : c.path || 'Saved (see your OBS recording folder)';
+      info.append(t, p); row.appendChild(info);
+      if (c.state === 'saved' && c.path) {
+        const btn = document.createElement('button'); btn.textContent = 'Copy path';
+        btn.onclick = () => copy(c.path).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy path', 1500); });
+        row.appendChild(btn);
+      }
+      box.appendChild(row);
+    });
+  }
+  const saveClips = () => { clips = clips.slice(0, 20); store.set('clips', clips); renderClips(); };
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); return; } catch (e) {}
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {} ta.remove();
+  }
+  eventHandlers.ReplayBufferSaved = d => {
+    if (waiting) { waiting.path = d.savedReplayPath || ''; waiting.state = 'saved'; waiting = null; saveClips(); }
+  };
+  function cancelClip() {
+    clearTimeout(clipTimer); clipTimer = null;
+    const p = clips.find(c => c.state === 'pending');
+    if (p) clips = clips.filter(c => c !== p);
+    saveClips();
+  }
+  async function startClip(name) {
+    if (!$('clipOn').checked) return;
+    cancelClip();
+    const entry = { name, ts: Date.now(), state: 'pending' };
+    clips.unshift(entry); saveClips();
+    const fail = msg => { entry.state = 'failed'; entry.error = msg; saveClips(); };
+    try {
+      const s = await request('GetReplayBufferStatus');
+      if (!okResp(s)) throw new Error('Replay Buffer is off. In OBS: Settings → Output → Replay Buffer → Enable.');
+      if (!s.responseData.outputActive) {
+        const r = await request('StartReplayBuffer');
+        if (!okResp(r)) throw new Error('Couldn’t start the Replay Buffer. In OBS: Settings → Output → Replay Buffer → Enable.');
+      }
+    } catch (e) { fail(e.message); return; }
+    clipTimer = setTimeout(async () => {
+      clipTimer = null;
+      try {
+        waiting = entry;
+        const r = await request('SaveReplayBuffer');
+        if (!okResp(r)) throw new Error('OBS couldn’t save the clip.');
+        setTimeout(async () => {               // fallback if the "saved" event didn't arrive
+          if (waiting !== entry) return;
+          waiting = null;
+          try { const l = await request('GetLastReplayBufferReplay'); entry.path = okResp(l) ? l.responseData.savedReplayPath : ''; } catch (e) {}
+          entry.state = 'saved'; saveClips();
+        }, 4000);
+      } catch (e) { waiting = null; fail(e.message); }
+    }, (PARTY_SECONDS + 0.8) * 1000);
+  }
+
+  // ---------- actions ----------
   async function go(withName) {
-    const name = withName ? cleanName() : '';
+    let name = withName ? cleanName() : '';
+    // typed it all lowercase? use the spelling saved from before (e.g. cardshopjoe -> CardShopJoe)
+    const known = name && raiders[name.toLowerCase()];
+    if (known && name === name.toLowerCase()) { name = known.name; $('name').value = name; }
     if (withName && !name) { say('Type the raider’s name first (or use "Play without name").', 'err'); $('name').focus(); return; }
     const count = withName ? cleanCount() : 0;
-    const ok = await emit({ name, count, sub: $('sub').value.trim(), sub2: $('sub2').value.trim() });
-    if (ok) {
-      if (name) remember(name, count);
-      say(name ? `Raid party for @${name} is playing 🎉` : 'Raid party is playing 🎉', 'ok');
+    const p = name ? plan(name, count) : null;
+    const ok = await emit({
+      name, count, avatar: name ? avatar : null,
+      badge: p && $('badgeOn').checked ? p.badge : '',
+      sub: $('sub').value.trim(), sub2: $('sub2').value.trim()
+    });
+    if (!ok) return;
+    let undo = null;
+    if (name) {
+      const r = raiders[p.key] || (raiders[p.key] = { name, avatar: null, raids: [] });
+      if (name !== name.toLowerCase() || !r.raids.length) r.name = name;
+      if (avatar) r.avatar = avatar;
+      if (p.same) { const last = r.raids[r.raids.length - 1]; if (count) last.count = count; }
+      else {
+        const entry = { ts: Date.now(), count };
+        r.raids.push(entry);
+        undo = { label: 'Don’t count this raid', fn: () => {
+          r.raids = r.raids.filter(x => x !== entry);
+          if (!r.raids.length) delete raiders[p.key];
+          saveRaiders(); renderRaiders(); updateWho(); say('Removed from the raid history.');
+        } };
+      }
+      saveRaiders(); renderRaiders(); updateWho();
     }
+    startClip(name);
+    say(name ? `Raid party for @${name} is playing 🎉${p.badge && $('badgeOn').checked ? ' (' + p.badge.toLowerCase() + ')' : ''}` : 'Raid party is playing 🎉', 'ok', undo);
   }
   $('go').onclick = () => go(true);
   $('noName').onclick = () => go(false);
-  $('stop').onclick = async () => { if (await emit({ action: 'stop' })) say('Stopped.'); };
+  $('stop').onclick = async () => { cancelClip(); if (await emit({ action: 'stop' })) say('Stopped.'); };
   ['name', 'count'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter' && !$('go').disabled) go(true); }));
-  $('count').addEventListener('input', () => { $('count').value = $('count').value.replace(/[^0-9]/g, ''); });
+  $('clipOn').addEventListener('change', renderClips);
   $('connect').onclick = connect;
   $('status').onclick = () => { $('conn').open = !$('conn').open; };
 
-  setStatus('err', 'Not connected');
+  renderRaiders(); renderClips(); setStatus('err', 'Not connected');
   connect();
 })();
 </script>
