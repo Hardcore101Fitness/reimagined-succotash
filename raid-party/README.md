@@ -1,70 +1,84 @@
-# Raid Party Overlay (OBS + Whatnot, 1080×1920)
+# DateNight Breaks: Raid Party (OBS + Whatnot, 1080×1920)
 
-> **Two versions:**
-> - **`raid-party-v2.html` (recommended):** a refined nightclub look. A silver mirror ball lit by a spotlight throws light spots around the room. Violet lasers frame the sides, gold and silver foil falls, and clean type shows "RAID FROM @Name". It keeps your face clear, and the music is a smooth house groove with no air horn. Change the colors with `?color=%2300d5ff` (lasers/glow) and `?gold=%23f3c969` (accents). It runs **15 seconds**. Halfway through, a second act opens up the lasers, drops more foil and switches the message to a gold "Tap follow so you never miss a show!" (change it with `?sub2=...`). Preview: `preview-v2.mp4`.
-> - **`raid-party.html` (v1):** the loud, rainbow, air-horn version.
->
-> Setup is identical for both. Just pick the file you want in step 1.
+When another seller raids your show, you type their name in a small panel inside OBS and press **START RAID PARTY**. Your stream gets a 15-second party in your brand colors (hot pink `#FF00A8` and electric blue `#14C8FA`), using Anton and Montserrat:
 
-A 10-second party you play with one button when another seller raids your show: a disco ball drops in, lasers and spotlights sweep, the ball throws light spots around the room, confetti bursts, and a big neon **RAID PARTY!** appears with a "Welcome raiders" message. It includes its own synthesized music: a whoosh, an air horn and a disco beat. The background is transparent, so your camera stays visible underneath.
-
-`preview.mp4` shows what it looks like (filmed on a gray stand-in background).
-
-## 1. Add it to OBS (Mac)
-
-1. Download `raid-party.html` and keep it somewhere permanent, e.g. `Documents/OBS Overlays/`.
-2. In OBS, click **+** in Sources → **Browser** → name it `Raid Party`.
-3. Set these properties:
-   - ✅ **Local file** → Browse → choose `raid-party.html`
-   - **Width** `1080`, **Height** `1920`, **FPS** `60`
-   - ✅ **Control audio via OBS** (so the party music goes out on stream)
-   - ✅ **Shutdown source when not visible**
-   - ✅ **Refresh browser when scene becomes active**
-   - Leave Custom CSS as is.
-4. Make sure it's at the **top** of the source list and fills the canvas (right-click → Transform → Fit to screen).
-5. Click the 👁 eye icon to **hide** it. It plays each time it's shown.
-
-**Use it in every scene:** make a scene called `Overlays`, put the `Raid Party` source in it, then add the `Overlays` scene as a source (**+** → Scene) at the top of each show scene. Then one hotkey works everywhere.
-
-### Personalize (optional)
-To change the text, use **Local file** off and put this in **URL** instead (adjust the path):
-
-```
-file:///Users/YOURNAME/Documents/OBS%20Overlays/raid-party.html?name=CardShopJoe
-```
-
-| Option | What it does |
+| Time | What happens |
 |---|---|
-| `?name=CardShopJoe` | Shows "THANKS FOR THE RAID @CardShopJoe" |
-| `?sub=Free%20pack%20giveaway%20next!` | Custom second line (instead of "say hi in the chat 👋") |
-| `?sound=0` | Turns off the built-in music |
-| `?volume=0.5` | Music volume, 0–1 (default 0.7) |
-| `?dim=0` | No screen darkening (default 0.25 makes lasers pop) |
+| 0–1.4s | A silver mirror ball comes down under a spotlight while a whoosh builds |
+| 1.4s | The lights come on: light spots fill the room, blue and pink lasers fade in, and **RAID FROM @TheirName** appears (with the number of raiders if you enter it) |
+| 7.4s | The music lifts, a two-tone laser fan opens and more foil falls. The message changes to **"Tap follow so you never miss a break!"** |
+| 11.4s | The name hands over to your **DateNight Breaks logo** with a glow |
+| 13.6–15s | Everything fades out and the ball goes back up |
 
-Combine options with `&`, e.g. `?name=CardShopJoe&volume=0.5`.
+The background is transparent, so your camera stays visible underneath. Preview: `preview-datenight.mp4`.
 
-## 2. OBS hotkeys
+## Files
 
-OBS → **Settings → Hotkeys**, find the `Raid Party` entries (under the `Overlays` scene if you nested it):
+Keep these together in one folder, e.g. `Documents/OBS Overlays/raid-party/`:
 
-- **Show 'Raid Party'** → e.g. `⌃⌥⌘R`
-- **Hide 'Raid Party'** → e.g. `⌃⌥⌘H`
+- `datenight-raid.html`: the overlay
+- `raid-control.html`: the control panel
+- `assets/`: your logo and the two fonts (both fonts are free to use under the OFL license; the license files are included)
 
-macOS: OBS needs **System Settings → Privacy & Security → Accessibility** (and **Input Monitoring**) turned on, or hotkeys won't work while another app is in front.
+## 1. Turn on OBS's WebSocket server (one time)
 
-## 3. TourBox Elite one-button trigger
+OBS → **Tools → WebSocket Server Settings**:
+1. Tick **Enable WebSocket server**.
+2. Click **Show Connect Info** and copy the **Server Password**.
 
-The overlay must be hidden and then shown to replay, so set up one button to do both:
+(This needs OBS 28 or newer.)
 
-1. Open **TourBox Console** → choose your OBS preset (or create one for OBS).
-2. Pick a button → **Macro**:
-   1. Key: `⌃⌥⌘H` (hide)
-   2. Delay: `100 ms`
-   3. Key: `⌃⌥⌘R` (show)
-3. Save. One press = raid party. Pressing it again during the party restarts it.
+## 2. Add the overlay
 
-The overlay fades to fully transparent by itself after 10 seconds, so you don't need to hide it after.
+1. In OBS, make a scene called `Overlays`.
+2. In that scene, click **+** → **Browser** → name it `Raid Party`.
+3. Set these properties:
+   - ✅ **Local file** → choose `datenight-raid.html`
+   - **Width** `1080`, **Height** `1920`, **FPS** `60`
+   - ✅ **Control audio via OBS**
+   - ⬜ **Shutdown source when not visible**: leave it **off**
+   - ⬜ **Refresh browser when scene becomes active**: leave it **off**
+4. Leave it **visible** (eye on). It's invisible until a raid party plays.
+5. Add the `Overlays` scene to the top of each show scene (**+** → **Scene** → `Overlays`).
 
-## Test it
+To hear the music yourself, set the source to **Monitor and Output** in **Edit → Advanced Audio Properties**.
 
-Double-click `raid-party.html` to open it in Safari or Chrome and watch it play. Click or press Space to replay with sound (browsers block sound until you click).
+## 3. Add the control panel as a dock
+
+1. OBS → **Docks → Custom Browser Docks…** (on older OBS: **View → Docks**).
+2. **Dock Name:** `Raid Control`
+3. **URL:** the full path to `raid-control.html`, for example:
+   `file:///Users/YOURNAME/Documents/OBS%20Overlays/raid-party/raid-control.html`
+   Tip: drag the file into Safari's address bar to see its exact `file:///` path, then copy it. Spaces become `%20`.
+4. **Apply**, then dock the panel wherever you like.
+5. In the panel, open **OBS connection**, paste the password and click **Connect**. When the dot turns green, you're set. It remembers the password.
+
+### Using it on a raid
+1. Type the raider's name, and how many raiders came if you know it.
+2. Press **Enter** or click **START RAID PARTY**.
+3. Recent raiders are saved as buttons, so a repeat raider is one click away.
+
+Use **Play without name** if you didn't catch the name, and **Stop** to end it early. You can change the two messages under **Custom text**.
+
+## 4. TourBox Elite button (optional)
+
+A TourBox button replays the party with the **last name you used in the panel**, or the no-name version if you haven't used it yet.
+
+1. OBS → **Settings → Hotkeys**. Under the `Overlays` scene, set **Show 'Raid Party'** (e.g. `⌃⌥⌘R`) and **Hide 'Raid Party'** (e.g. `⌃⌥⌘H`).
+2. **TourBox Console** → your OBS preset → pick a button → **Macro**: `⌃⌥⌘H` → delay `100 ms` → `⌃⌥⌘R`.
+
+The overlay only plays on a quick hide → show like this, so normal scene switching never sets it off.
+
+On macOS, OBS needs **System Settings → Privacy & Security → Accessibility** (and **Input Monitoring**) for hotkeys to work while another app is in front.
+
+## Test without OBS
+
+Double-click `datenight-raid.html` to watch it in Safari or Chrome. Click to replay with sound. You can add `?name=CardShopJoe&count=148` to the end of the address to preview a name.
+
+---
+
+### Older versions
+- `raid-party-v2.html`: the same nightclub look in violet and gold, without your branding or the panel.
+- `raid-party.html`: the first, loud rainbow version.
+
+Both play when the source is shown, so they use the setup in their own file comments (with **Shutdown source when not visible** turned on).

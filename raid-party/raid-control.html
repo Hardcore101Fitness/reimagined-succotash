@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Raid Control</title>
+<!--
+  DATENIGHT BREAKS — RAID CONTROL panel.
+  Add it to OBS as a dock: View -> Docks -> Custom Browser Docks, URL = file:///.../raid-party/raid-control.html
+  It talks to OBS through OBS's built-in WebSocket server (Tools -> WebSocket Server Settings)
+  and tells the overlay (datenight-raid.html) who raided you.
+-->
+<style>
+  @font-face { font-family: "DN Anton"; src: url("assets/Anton-Regular.ttf") format("truetype"); }
+  @font-face { font-family: "DN Montserrat"; src: url("assets/Montserrat-Variable.ttf") format("truetype"); font-weight: 100 900; }
+  :root { --pink: #FF00A8; --blue: #14C8FA; --bg: #0b0a10; --panel: #16141d; --line: #2a2733; --text: #f4f3f8; --muted: #9a97a6; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 500 14px "DN Montserrat", -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  main { padding: 14px; max-width: 520px; margin: 0 auto; display: grid; gap: 12px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h1 { margin: 0; font: 400 22px/1 "DN Anton", Impact, sans-serif; letter-spacing: .02em; }
+  h1 span { color: var(--pink); }
+  .status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #e5484d; box-shadow: 0 0 8px #e5484d; }
+  .dot.ok { background: #30d158; box-shadow: 0 0 8px #30d158; }
+  .dot.wait { background: #ffb224; box-shadow: 0 0 8px #ffb224; }
+  label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+  input { width: 100%; padding: 12px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+          font: 600 16px "DN Montserrat", -apple-system, Arial, sans-serif; outline: none; }
+  input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(20,200,250,.18); }
+  .row { display: grid; grid-template-columns: 1fr 96px; gap: 10px; }
+  .at { position: relative; }
+  .at input { padding-left: 30px; }
+  .at::before { content: "@"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 700; font-size: 16px; }
+  button { font: 700 14px "DN Montserrat", -apple-system, Arial, sans-serif; border-radius: 10px; border: 1px solid var(--line); background: var(--panel);
+           color: var(--text); padding: 10px 12px; cursor: pointer; }
+  button:hover { border-color: #3d3948; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  #go { width: 100%; padding: 16px; border: 0; color: #fff; font: 400 26px/1 "DN Anton", Impact, sans-serif; letter-spacing: .04em;
+        background: linear-gradient(90deg, var(--blue), var(--pink)); box-shadow: 0 6px 24px rgba(255,0,168,.25); }
+  #go:active { transform: translateY(1px); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+          background: var(--panel); border: 1px solid var(--line); cursor: pointer; }
+  .chip:hover { border-color: var(--pink); }
+  .chip small { color: var(--muted); font-weight: 500; }
+  .empty { color: var(--muted); font-size: 12px; }
+  details { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #110f17; }
+  summary { cursor: pointer; font-weight: 700; font-size: 13px; color: var(--muted); }
+  details[open] summary { margin-bottom: 10px; }
+  details .grid { display: grid; gap: 10px; }
+  .msg { font-size: 12px; color: var(--muted); min-height: 16px; }
+  .msg.err { color: #ff6b6b; }
+  .msg.ok { color: #30d158; }
+  .help { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>DATE<span>NIGHT</span> RAID</h1>
+    <div class="status" id="status" title="Connection settings"><span class="dot" id="dot"></span><span id="statusText">Not connected</span></div>
+  </header>
+
+  <div class="row">
+    <div>
+      <label for="name">Who raided you?</label>
+      <div class="at"><input id="name" placeholder="SellerName" autocomplete="off" spellcheck="false" maxlength="24"></div>
+    </div>
+    <div>
+      <label for="count">Raiders</label>
+      <input id="count" inputmode="numeric" placeholder="#" maxlength="5">
+    </div>
+  </div>
+
+  <button id="go" disabled>START RAID PARTY</button>
+  <div class="actions">
+    <button id="noName" disabled>Play without name</button>
+    <button id="stop" disabled>Stop</button>
+  </div>
+  <div class="msg" id="msg"></div>
+
+  <div>
+    <label>Recent raiders</label>
+    <div class="chips" id="recent"></div>
+  </div>
+
+  <details>
+    <summary>Custom text (optional)</summary>
+    <div class="grid">
+      <div><label for="sub">Line under the name</label><input id="sub" placeholder="Welcome to DateNight Breaks!" maxlength="48"></div>
+      <div><label for="sub2">Second message</label><input id="sub2" placeholder="Tap follow so you never miss a break!" maxlength="48"></div>
+    </div>
+  </details>
+
+  <details id="conn">
+    <summary>OBS connection</summary>
+    <div class="grid">
+      <div class="row">
+        <div><label for="host">Host</label><input id="host" value="127.0.0.1" spellcheck="false"></div>
+        <div><label for="port">Port</label><input id="port" value="4455" inputmode="numeric"></div>
+      </div>
+      <div><label for="pw">Server password</label><input id="pw" type="password" placeholder="From OBS: Tools → WebSocket Server Settings"></div>
+      <button id="connect">Connect</button>
+      <p class="help">In OBS: <b>Tools → WebSocket Server Settings</b> → tick <b>Enable WebSocket server</b> → <b>Show Connect Info</b> and copy the password here. It's saved in this panel.</p>
+    </div>
+  </details>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('dnraid.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('dnraid.' + k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  // ---------- settings ----------
+  $('host').value = store.get('host', '127.0.0.1');
+  $('port').value = store.get('port', '4455');
+  $('pw').value = store.get('pw', '');
+  $('sub').value = store.get('sub', '');
+  $('sub2').value = store.get('sub2', '');
+  ['sub', 'sub2'].forEach(k => $(k).addEventListener('input', () => store.set(k, $(k).value)));
+
+  // ---------- obs-websocket v5 ----------
+  let ws = null, ready = false, reqId = 0, retry = null, manualClose = false;
+  const pending = new Map();
+
+  function setStatus(state, text) {
+    $('dot').className = 'dot' + (state === 'ok' ? ' ok' : state === 'wait' ? ' wait' : '');
+    $('statusText').textContent = text;
+    ['go', 'noName', 'stop'].forEach(id => $(id).disabled = state !== 'ok');
+  }
+  function say(text, kind) { const m = $('msg'); m.textContent = text || ''; m.className = 'msg' + (kind ? ' ' + kind : ''); }
+
+  async function sha256b64(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  }
+
+  function connect() {
+    clearTimeout(retry);
+    if (ws) { manualClose = true; try { ws.close(); } catch (e) {} }
+    manualClose = false; ready = false;
+    const host = $('host').value.trim() || '127.0.0.1', port = $('port').value.trim() || '4455';
+    store.set('host', host); store.set('port', port); store.set('pw', $('pw').value);
+    setStatus('wait', 'Connecting…');
+    let sock;
+    try { sock = new WebSocket(`ws://${host}:${port}`, 'obswebsocket.json'); } catch (e) { setStatus('err', 'Bad address'); return; }
+    ws = sock;
+    sock.onmessage = async ev => {
+      let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.op === 0) {                       // Hello
+        const ident = { rpcVersion: 1, eventSubscriptions: 0 };
+        const a = m.d.authentication;
+        if (a) {
+          const pw = $('pw').value;
+          if (!pw) { setStatus('err', 'Password needed'); $('conn').open = true; say('OBS needs the WebSocket password. Open "OBS connection" below.', 'err'); manualClose = true; sock.close(); return; }
+          ident.authentication = await sha256b64((await sha256b64(pw + a.salt)) + a.challenge);
+        }
+        sock.send(JSON.stringify({ op: 1, d: ident }));
+      } else if (m.op === 2) {                // Identified
+        ready = true; setStatus('ok', 'Connected to OBS'); say(''); $('conn').open = false; $('name').focus();
+      } else if (m.op === 7) {                // RequestResponse
+        const p = pending.get(m.d.requestId);
+        if (p) { pending.delete(m.d.requestId); p(m.d); }
+      }
+    };
+    sock.onclose = ev => {
+      if (ws !== sock) return;
+      ready = false;
+      if (ev.code === 4009) { setStatus('err', 'Wrong password'); $('conn').open = true; say('OBS rejected the password. Check Tools → WebSocket Server Settings.', 'err'); return; }
+      setStatus('err', 'Not connected');
+      if (!manualClose) retry = setTimeout(connect, 3000);
+    };
+    sock.onerror = () => {};
+  }
+
+  function request(requestType, requestData) {
+    return new Promise((resolve, reject) => {
+      if (!ready) { reject(new Error('Not connected to OBS')); return; }
+      const requestId = 'r' + (++reqId);
+      pending.set(requestId, resolve);
+      ws.send(JSON.stringify({ op: 6, d: { requestType, requestId, requestData } }));
+      setTimeout(() => { if (pending.delete(requestId)) reject(new Error('OBS did not answer')); }, 4000);
+    });
+  }
+
+  // Sends a JS event to every OBS browser source (the overlay listens for "raidparty")
+  async function emit(detail) {
+    try {
+      const r = await request('CallVendorRequest', {
+        vendorName: 'obs-browser', requestType: 'emit_event',
+        requestData: { event_name: 'raidparty', event_data: detail }
+      });
+      if (!r.requestStatus || !r.requestStatus.result) throw new Error((r.requestStatus && r.requestStatus.comment) || 'OBS refused the request');
+      return true;
+    } catch (e) { say(e.message, 'err'); return false; }
+  }
+
+  // ---------- recent raiders ----------
+  let recent = store.get('recent', []);
+  function renderRecent() {
+    const box = $('recent'); box.innerHTML = '';
+    if (!recent.length) { box.innerHTML = '<span class="empty">Names you use will show up here.</span>'; return; }
+    recent.forEach(r => {
+      const b = document.createElement('button'); b.className = 'chip'; b.type = 'button';
+      b.textContent = '@' + r.name;
+      if (r.count) { const s = document.createElement('small'); s.textContent = r.count; b.appendChild(s); }
+      b.title = 'Fill in ' + r.name;
+      b.onclick = () => { $('name').value = r.name; $('count').value = r.count || ''; $('name').focus(); };
+      box.appendChild(b);
+    });
+  }
+  function remember(name, count) {
+    recent = [{ name, count }, ...recent.filter(r => r.name.toLowerCase() !== name.toLowerCase())].slice(0, 8);
+    store.set('recent', recent); renderRecent();
+  }
+  renderRecent();
+
+  // ---------- actions ----------
+  const cleanName = () => $('name').value.trim().replace(/^@+/, '').replace(/\s+/g, '').slice(0, 24);
+  const cleanCount = () => { const v = parseInt($('count').value.replace(/[^0-9]/g, ''), 10); return Number.isFinite(v) && v > 0 ? v : 0; };
+
+  async function go(withName) {
+    const name = withName ? cleanName() : '';
+    if (withName && !name) { say('Type the raider’s name first (or use "Play without name").', 'err'); $('name').focus(); return; }
+    const count = withName ? cleanCount() : 0;
+    const ok = await emit({ name, count, sub: $('sub').value.trim(), sub2: $('sub2').value.trim() });
+    if (ok) {
+      if (name) remember(name, count);
+      say(name ? `Raid party for @${name} is playing 🎉` : 'Raid party is playing 🎉', 'ok');
+    }
+  }
+  $('go').onclick = () => go(true);
+  $('noName').onclick = () => go(false);
+  $('stop').onclick = async () => { if (await emit({ action: 'stop' })) say('Stopped.'); };
+  ['name', 'count'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter' && !$('go').disabled) go(true); }));
+  $('count').addEventListener('input', () => { $('count').value = $('count').value.replace(/[^0-9]/g, ''); });
+  $('connect').onclick = connect;
+  $('status').onclick = () => { $('conn').open = !$('conn').open; };
+
+  setStatus('err', 'Not connected');
+  connect();
+})();
+</script>
+</body>
+</html>
