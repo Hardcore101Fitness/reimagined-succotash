@@ -1,5 +1,11 @@
 # Raid Party Overlay (OBS + Whatnot, 1080×1920)
 
+> **Two versions:**
+> - **`raid-party-v2.html` (recommended):** a refined nightclub look. A silver mirror ball lit by a spotlight throws light spots around the room. Violet lasers frame the sides, gold and silver foil falls, and clean type shows "RAID FROM @Name". It keeps your face clear, and the music is a smooth house groove with no air horn. Change the colors with `?color=%2300d5ff` (lasers/glow) and `?gold=%23f3c969` (accents). Preview: `preview-v2.mp4`.
+> - **`raid-party.html` (v1):** the loud, rainbow, air-horn version.
+>
+> Setup is identical for both. Just pick the file you want in step 1.
+
 A 10-second party you play with one button when another seller raids your show: a disco ball drops in, lasers and spotlights sweep, the ball throws light spots around the room, confetti bursts, and a big neon **RAID PARTY!** appears with a "Welcome raiders" message. It includes its own synthesized music: a whoosh, an air horn and a disco beat. The background is transparent, so your camera stays visible underneath.
 
 `preview.mp4` shows what it looks like (filmed on a gray stand-in background).
