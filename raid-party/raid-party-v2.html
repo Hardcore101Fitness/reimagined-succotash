@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Raid Party Overlay v2</title>
 <!--
-  RAID PARTY v2 — "nightclub" look. OBS Browser Source, 1080 x 1920, ~10 seconds, transparent.
+  RAID PARTY v2 — "nightclub" look. OBS Browser Source, 1080 x 1920, ~15 seconds, transparent.
 
   URL options (e.g. raid-party-v2.html?name=CardShopJoe&color=%2300d5ff):
     name=SellerName   -> "RAID FROM / @SellerName"
     sub=Some text     -> custom line under the headline
+    sub2=Some text    -> line it switches to halfway (default: follow reminder)
     color=#hex        -> laser / glow colour (default violet #8b5cff). Use %23 instead of # in the URL.
     gold=#hex         -> accent colour for the small text, lines and foil (default #f3c969)
     sound=0           -> silent      volume=0.6 -> 0..1
@@ -29,7 +30,7 @@
 <script>
 (() => {
   'use strict';
-  const W = 1080, H = 1920, DUR = 10;
+  const W = 1080, H = 1920, DUR = 15;
   const P = new URLSearchParams(location.search);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const num = (k, d) => { const v = parseFloat(P.get(k)); return Number.isFinite(v) ? v : d; };
@@ -48,7 +49,8 @@
 
   const BPM = 120, BEAT = 60 / BPM;
   const T_HIT = 1.4;   // lights come on
-  const T_OUT = 8.6;   // wrap up
+  const T_ACT2 = T_HIT + 6;  // second act: lights open up (on a bar line)
+  const T_OUT = DUR - 1.4;    // wrap up
   const TAU = Math.PI * 2;
   const FONT = '-apple-system, "SF Pro Display", "Avenir Next", "Helvetica Neue", Arial, sans-serif';
 
@@ -79,7 +81,7 @@
   const L = (() => { const v = [-0.55, 0.6, 0.58]; const l = Math.hypot(...v); return v.map(x => x / l); })(); // pin spot from upper-left
   function ballPos(t) {
     let y = TOP + (REST - TOP) * easeOutCubic(prog(t, 0.1, T_HIT));
-    y -= (REST - TOP + 60) * easeInOutCubic(prog(t, T_OUT + 0.2, 9.7));
+    y -= (REST - TOP + 60) * easeInOutCubic(prog(t, T_OUT + 0.2, DUR - 0.3));
     return { x: W / 2, y, rot: t * 0.55 };
   }
   function drawPinBeam(b, k) {
@@ -170,15 +172,18 @@
   // ---------- lasers: one colour, framing the sides ----------
   const RIGS = [
     { x: -10, y: H + 10, base: -1.18, spread: 0.32, n: 4, sp: 0.55, ph: 0 },
-    { x: W + 10, y: H + 10, base: -Math.PI + 1.18, spread: 0.32, n: 4, sp: 0.55, ph: Math.PI }
+    { x: W + 10, y: H + 10, base: -Math.PI + 1.18, spread: 0.32, n: 4, sp: 0.55, ph: Math.PI },
+    { x: W / 2, y: H + 10, base: -Math.PI / 2, spread: 1.1, n: 7, sp: 0.4, ph: 1.0, act2: true }
   ];
   function drawLasers(t, k) {
     if (k <= 0) return;
     const pulse = 0.7 + 0.3 * Math.exp(-beatPhase(t) * 4);
     ctx.globalCompositeOperation = 'lighter';
+    const boost = easeOutCubic(prog(t, T_ACT2, T_ACT2 + 0.6));
     for (const r of RIGS) {
-      const sweep = Math.sin(t * r.sp + r.ph) * 0.22;
-      const a0 = k * pulse;
+      if (r.act2 && boost <= 0) continue;
+      const sweep = Math.sin(t * r.sp * (1 + boost) + r.ph) * (0.22 + 0.1 * boost);
+      const a0 = k * pulse * (r.act2 ? boost * 0.8 : 1);
       for (let i = 0; i < r.n; i++) {
         const ang = r.base + (i / (r.n - 1) - 0.5) * r.spread + sweep;
         const ex = r.x + Math.cos(ang) * 3000, ey = r.y + Math.sin(ang) * 3000;
@@ -211,7 +216,7 @@
     });
   }
   function sim(t, dt) {
-    if (t > T_HIT + 0.5 && t < T_HIT + 2.6) { acc += dt * 40; while (acc >= 1) { acc--; spawn(); } }
+    if ((t > T_HIT + 0.5 && t < T_HIT + 2.6) || (t > T_ACT2 && t < T_ACT2 + 1.6)) { acc += dt * 40; while (acc >= 1) { acc--; spawn(); } }
     for (const p of parts) {
       p.x += (p.vx + Math.sin(t * p.wob + p.ph) * 45) * dt; p.y += p.vy * dt;
       p.rot += p.vr * dt; p.flip += p.vf * dt;
@@ -255,6 +260,7 @@
   const HEAD = NAME ? '@' + NAME : 'WELCOME, RAIDERS';
   const SUBL = SUB || (NAME ? 'Welcome in, everyone. Glad you’re here!' : 'Glad you’re here. Say hi in the chat!');
 
+  const SUBL2 = (P.get('sub2') || '').trim().slice(0, 48) || 'Tap follow so you never miss a show!';
   function drawText(t) {
     const out = easeInOutCubic(prog(t, T_OUT, T_OUT + 0.7));
     if (t < T_HIT + 0.3 || out >= 1) return;
@@ -291,7 +297,7 @@
     hctx.fillStyle = '#fff';
     const hy = 130 + (1 - ha) * 140;
     hctx.fillText(HEAD, W / 2, hy);
-    const sw = prog(t, 3.4, 4.4);
+    const sw = t < T_ACT2 ? prog(t, 3.4, 4.4) : prog(t, T_ACT2 + 0.1, T_ACT2 + 1.1);
     if (sw > 0 && sw < 1) {
       hctx.globalCompositeOperation = 'source-atop';
       const sx = -300 + sw * (W + 600);
@@ -309,16 +315,23 @@
 
     // supporting line
     const sa = easeOutCubic(prog(t, T_HIT + 1.1, T_HIT + 1.8));
-    ctx.globalAlpha = sa * vis * 0.9;
-    fitSize(ctx, SUBL, 500, 40, 900);
+    const swap = easeInOutCubic(prog(t, T_ACT2 + 0.2, T_ACT2 + 0.9)); // crossfade to second message
     ctx.fillStyle = '#fff';
-    ctx.fillText(SUBL, W / 2, Y + 105 + (1 - sa) * 16);
+    ctx.globalAlpha = sa * vis * 0.9 * (1 - swap);
+    fitSize(ctx, SUBL, 500, 40, 900);
+    ctx.fillText(SUBL, W / 2, Y + 105 + (1 - sa) * 16 - swap * 14);
+    if (swap > 0) {
+      ctx.globalAlpha = vis * 0.95 * swap;
+      fitSize(ctx, SUBL2, 600, 40, 900);
+      ctx.fillStyle = GOLD;
+      ctx.fillText(SUBL2, W / 2, Y + 105 + (1 - swap) * 14);
+    }
     ctx.restore();
     ctx.globalAlpha = 1;
   }
 
   function drawVignette(t) {
-    const k = DIM * Math.min(easeOutCubic(prog(t, 0, 1.2)), 1 - prog(t, 9.0, 10));
+    const k = DIM * Math.min(easeOutCubic(prog(t, 0, 1.2)), 1 - prog(t, DUR - 1, DUR));
     if (k <= 0) return;
     ctx.globalCompositeOperation = 'source-over';
     const g = ctx.createRadialGradient(W / 2, H * 0.45, 380, W / 2, H * 0.45, 1250);
@@ -337,9 +350,9 @@
     drawLasers(t, lasers);
     drawSpots(t, b, lights);
     drawBall(t, b);
-    drawConfetti(1 - prog(t, 8.8, 9.6));
+    drawConfetti(1 - prog(t, DUR - 1.2, DUR - 0.4));
     drawText(t);
-    cv.style.opacity = Math.min(prog(t, 0, 0.3), 1 - prog(t, 9.4, 10)).toFixed(3);
+    cv.style.opacity = Math.min(prog(t, 0, 0.3), 1 - prog(t, DUR - 0.6, DUR)).toFixed(3);
   }
 
   // ---------- sound: riser, low hit, smooth house groove (no air horn) ----------
@@ -361,7 +374,7 @@
     }
     const T = AC.currentTime + 0.03;
     master = AC.createGain();
-    master.gain.setValueAtTime(VOL, T); master.gain.setValueAtTime(VOL, T + 8.7); master.gain.linearRampToValueAtTime(0.0001, T + 9.9);
+    master.gain.setValueAtTime(VOL, T); master.gain.setValueAtTime(VOL, T + DUR - 1.3); master.gain.linearRampToValueAtTime(0.0001, T + DUR - 0.1);
     const comp = AC.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3;
     const out = AC.createGain(); out.gain.value = 0.85;
     out.connect(comp); comp.connect(master); master.connect(AC.destination);
@@ -398,14 +411,23 @@
     noise(D, 2.2, 'highpass', 7000, 0.4, 0.12, 0.02);
     [349.23, 440, 523.25, 659.25, 783.99].forEach(f => osc(D, f, 2.6, 'triangle', 0.045, 3000, 0.04));
 
+    // second act: riser over the bar before, then a lift
+    const A2 = T + T_ACT2;
+    const rf2 = noise(A2 - 4 * BEAT, 4 * BEAT, 'bandpass', 400, 1.5, 0.16, 4 * BEAT - 0.1);
+    rf2.frequency.setValueAtTime(400, A2 - 4 * BEAT); rf2.frequency.exponentialRampToValueAtTime(4000, A2);
+    osc(A2, 48, 1.2, 'sine', 0.6, 300);
+    noise(A2, 1.8, 'highpass', 7000, 0.4, 0.1, 0.02);
+    [392, 493.88, 587.33, 739.99].forEach(f => osc(A2, f, 2.2, 'triangle', 0.04, 3000, 0.04));
+
     // groove: Fmaj7 - Em7 - Dm7 - Cmaj7 (warm, not cheesy)
     const roots = [87.31, 82.41, 73.42, 65.41], chords = [[0, 4, 7, 11], [0, 3, 7, 10], [0, 3, 7, 10], [0, 4, 7, 11]];
     for (let n = 0; ; n++) {
       const time = D + n * BEAT;
-      if (time > T + 9.6) break;
+      if (time > T + DUR - 0.4) break;
       const bar = Math.floor(n / 4) % 4, root = roots[bar];
       if (n > 0) kick(time, 0.75);
       noise(time + BEAT / 2, 0.09, 'highpass', 8500, 0.6, 0.09);
+      if (time >= T + T_ACT2) { noise(time + BEAT / 4, 0.03, 'highpass', 9500, 0.6, 0.05); noise(time + BEAT * 3 / 4, 0.03, 'highpass', 9500, 0.6, 0.05); if (n % 2) noise(time, 0.16, 'bandpass', 1800, 0.9, 0.14); }
       osc(time + BEAT / 2, root, 0.22, 'triangle', 0.35, 320);
       if (n % 4 === 0 && n > 0) chords[bar].forEach(s => osc(time, root * 4 * Math.pow(2, s / 12), BEAT * 3.8, 'triangle', 0.03, 1800, 0.25));
     }

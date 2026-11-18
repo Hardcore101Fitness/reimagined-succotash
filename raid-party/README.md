@@ -1,7 +1,7 @@
 # Raid Party Overlay (OBS + Whatnot, 1080×1920)
 
 > **Two versions:**
-> - **`raid-party-v2.html` (recommended):** a refined nightclub look. A silver mirror ball lit by a spotlight throws light spots around the room. Violet lasers frame the sides, gold and silver foil falls, and clean type shows "RAID FROM @Name". It keeps your face clear, and the music is a smooth house groove with no air horn. Change the colors with `?color=%2300d5ff` (lasers/glow) and `?gold=%23f3c969` (accents). Preview: `preview-v2.mp4`.
+> - **`raid-party-v2.html` (recommended):** a refined nightclub look. A silver mirror ball lit by a spotlight throws light spots around the room. Violet lasers frame the sides, gold and silver foil falls, and clean type shows "RAID FROM @Name". It keeps your face clear, and the music is a smooth house groove with no air horn. Change the colors with `?color=%2300d5ff` (lasers/glow) and `?gold=%23f3c969` (accents). It runs **15 seconds**. Halfway through, a second act opens up the lasers, drops more foil and switches the message to a gold "Tap follow so you never miss a show!" (change it with `?sub2=...`). Preview: `preview-v2.mp4`.
 > - **`raid-party.html` (v1):** the loud, rainbow, air-horn version.
 >
 > Setup is identical for both. Just pick the file you want in step 1.
